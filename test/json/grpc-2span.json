@@ -1,0 +1,24 @@
+[
+  {
+    "traceId": "e4fa66cb2b2e1ed0",
+    "parentId": "e4fa66cb2b2e1ed0",
+    "id": "b2503dd74db4a551",
+    "kind": "SERVER",
+    "name": "services.keyvalueservice/get",
+    "timestamp": 1646888469032055,
+    "duration": 51889,
+    "localEndpoint": { "serviceName": "kv", "ipv4": "172.29.143.96" },
+    "remoteEndpoint": { "ipv4": "127.0.0.1", "port": 59952 },
+    "tags": { "grpc.remote_addr": "/127.0.0.1:59952" },
+    "shared": true
+  },
+  {
+    "traceId": "e4fa66cb2b2e1ed0",
+    "id": "e4fa66cb2b2e1ed0",
+    "kind": "CLIENT",
+    "name": "services.userservice/getuser",
+    "timestamp": 1646888469029072,
+    "duration": 179747,
+    "localEndpoint": { "serviceName": "main", "ipv4": "172.29.143.96" }
+  }
+]

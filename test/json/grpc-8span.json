@@ -1,0 +1,92 @@
+[
+  {
+    "traceId": "4e863982c330afe0",
+    "parentId": "4e863982c330afe0",
+    "id": "1deb02a5d6315a3e",
+    "kind": "CLIENT",
+    "name": "services.keyvalueservice/get",
+    "timestamp": 1648194771918824,
+    "duration": 90146,
+    "localEndpoint": { "serviceName": "kvclient", "ipv4": "172.17.0.1" }
+  },
+  {
+    "traceId": "4e863982c330afe0",
+    "id": "4e863982c330afe0",
+    "kind": "SERVER",
+    "name": "services.userservice/getuser",
+    "timestamp": 1648194771918613,
+    "duration": 259637,
+    "localEndpoint": { "serviceName": "user", "ipv4": "172.17.0.1" },
+    "remoteEndpoint": { "ipv4": "127.0.0.1", "port": 59724 },
+    "tags": { "grpc.remote_addr": "/127.0.0.1:59724" },
+    "shared": true
+  },
+  {
+    "traceId": "4e863982c330afe0",
+    "parentId": "4e863982c330afe0",
+    "id": "eeb829479fab66d9",
+    "kind": "CLIENT",
+    "name": "services.keyvalueservice/get",
+    "timestamp": 1648194772009265,
+    "duration": 83376,
+    "localEndpoint": { "serviceName": "kvclient", "ipv4": "172.17.0.1" }
+  },
+  {
+    "traceId": "4e863982c330afe0",
+    "parentId": "4e863982c330afe0",
+    "id": "eeb829479fab66d9",
+    "kind": "SERVER",
+    "name": "services.keyvalueservice/get",
+    "timestamp": 1648194772009943,
+    "duration": 81699,
+    "localEndpoint": { "serviceName": "kv", "ipv4": "172.17.0.1" },
+    "remoteEndpoint": { "ipv4": "127.0.0.1", "port": 48120 },
+    "tags": { "grpc.remote_addr": "/127.0.0.1:48120" },
+    "shared": true
+  },
+  {
+    "traceId": "4e863982c330afe0",
+    "parentId": "4e863982c330afe0",
+    "id": "ea3b41db7310c8c1",
+    "kind": "CLIENT",
+    "name": "services.keyvalueservice/get",
+    "timestamp": 1648194772092831,
+    "duration": 85117,
+    "localEndpoint": { "serviceName": "kvclient", "ipv4": "172.17.0.1" }
+  },
+  {
+    "traceId": "4e863982c330afe0",
+    "parentId": "4e863982c330afe0",
+    "id": "1deb02a5d6315a3e",
+    "kind": "SERVER",
+    "name": "services.keyvalueservice/get",
+    "timestamp": 1648194771919476,
+    "duration": 88566,
+    "localEndpoint": { "serviceName": "kv", "ipv4": "172.17.0.1" },
+    "remoteEndpoint": { "ipv4": "127.0.0.1", "port": 48120 },
+    "tags": { "grpc.remote_addr": "/127.0.0.1:48120" },
+    "shared": true
+  },
+  {
+    "traceId": "4e863982c330afe0",
+    "parentId": "4e863982c330afe0",
+    "id": "ea3b41db7310c8c1",
+    "kind": "SERVER",
+    "name": "services.keyvalueservice/get",
+    "timestamp": 1648194772093722,
+    "duration": 83575,
+    "localEndpoint": { "serviceName": "kv", "ipv4": "172.17.0.1" },
+    "remoteEndpoint": { "ipv4": "127.0.0.1", "port": 48120 },
+    "tags": { "grpc.remote_addr": "/127.0.0.1:48120" },
+    "shared": true
+  },
+  {
+    "traceId": "4e863982c330afe0",
+    "id": "4e863982c330afe0",
+    "kind": "CLIENT",
+    "name": "services.userservice/getuser",
+    "timestamp": 1648194771917779,
+    "duration": 260739,
+    "localEndpoint": { "serviceName": "main", "ipv4": "172.17.0.1" }
+  }
+]
