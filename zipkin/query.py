@@ -1,12 +1,18 @@
 import requests
+from config import settings
+
+API = settings.zipkin_api
 
 
 def query_traces(param: dict) -> list[dict]:
-    req = requests.get()
+    r = requests.get(url=f'{API}/traces', params={
+        "serviceName": param["serviceName"]
+    })
+    return r.json()
 
 
 def query_trace(id: str) -> dict:
-    pass
+    r = requests.get(url=f'{API}/trace/{id}')
 
 
 def query_trace_many(ids: list[str]) -> dict:

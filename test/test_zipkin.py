@@ -1,11 +1,17 @@
 from zipkin import SpanNode, SpanNodeBuilder, utils
 import unittest
+from config import settings
 
 spanExample = {
     "A": 1,
     "B": 2,
     "C": 3
 }
+
+
+class TestDynaconf(unittest.TestCase):
+    def test_url(self):
+        self.assertEqual(settings.zipkin_api, "http://localhost:9441")
 
 
 class TestSpanUtils(unittest.TestCase):

@@ -2,6 +2,7 @@ import json
 from .utils import *
 from .span_cleaner import *
 from collections import deque
+from typing import Callable
 
 
 class SpanNode:
@@ -40,7 +41,7 @@ class SpanNode:
         child.parent = self
         self._children.append(child)
 
-    def traverse(self, callback: function):
+    def traverse(self, callback: Callable):
         queue = self.queue_root_most_spans()
         while len(queue) > 0:
             current = queue.popleft()
