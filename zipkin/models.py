@@ -93,7 +93,7 @@ class AdjustedSpan(BaseModel):
     annotations: list[AdjustedAnnotation]
     errorType: str
     depth: int
-    width: int
+    width: float
     left: int
     debug: bool
 

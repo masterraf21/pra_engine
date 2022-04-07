@@ -53,37 +53,37 @@ def make_durationStr(duration):
     return f'{duration/1000000: .3f}s'
 
 
-def add_layout_details(span_row: AdjustedSpan, trace_timestamp,
-                       trace_duration, depth, child_ids):
-    span_row.childIds = child_ids
-    span_row.depth = depth+1
-    span_row.depthClass = (depth-1) % 6
+# def add_layout_details(span_row: AdjustedSpan, trace_timestamp,
+#                        trace_duration, depth, child_ids):
+#     span_row.childIds = child_ids
+#     span_row.depth = depth+1
+#     # span_row.depthClass = (depth-1) % 6
 
-    if key_exists(span_row, "duration"):
-        width = (span_row.duration/trace_duration *
-                 100) if trace_duration else 0
-        span_row.width = 0.1 if width < 0.1 else width
-        span_row.durationStr = make_durationStr(span_row.duration)
-    else:
-        span_row.width = 0.1
-        span_row.durationStr = ''
+#     if span_row.duration:
+#         width = (span_row.duration/trace_duration *
+#                  100) if trace_duration else 0
+#         span_row.width = 0.1 if width < 0.1 else width
+#         span_row.durationStr = make_durationStr(span_row.duration)
+#     else:
+#         span_row.width = 0.1
+#         span_row.durationStr = ''
 
-    if trace_duration:
-        span_row.left = (
-            (span_row.timestamp-trace_timestamp)/trace_duration)*100
+#     if trace_duration:
+#         span_row.left = (
+#             (span_row.timestamp-trace_timestamp)/trace_duration)*100
 
-        if span_row.annotations:
-            for a in span_row.annotations:
-                if span_row.duration:
-                    a.left = (
-                        (a.timestamp-span_row.timestamp)/span_row.duration) * 100
-                else:
-                    a.left = 0
-                a.relativeTime = make_durationStr(
-                    a.timestamp-trace_timestamp)
-                a.width = 0
-    else:
-        span_row.left = 0
+#         if span_row.annotations:
+#             for a in span_row.annotations:
+#                 if span_row.duration:
+#                     a.left = (
+#                         (a.timestamp-span_row.timestamp)/span_row.duration) * 100
+#                 else:
+#                     a.left = 0
+#                 a.relativeTime = make_durationStr(
+#                     a.timestamp-trace_timestamp)
+#                 a.width = 0
+#     else:
+#         span_row.left = 0
 
 
 def increment_entry(d: dict, key):
@@ -126,8 +126,8 @@ def detailed_trace_summary(root: SpanNode):
                 children.append(child)
 
         sorted(children, key=cmp_to_key(node_by_timestamp))
-        queue = [children, *queue]
-        child_ids = list(map(lambda child: child.span.id, children))
+        queue = deque(children) + queue
+        # child_ids = list(map(lambda child: child.span.id, children))
 
         depth = 1
         while (current.parent and current.parent.span):
@@ -141,25 +141,28 @@ def detailed_trace_summary(root: SpanNode):
         is_leaf_span = len(children) == 0
         span_row = new_span_row(spans_to_merge, is_leaf_span)
 
-        add_layout_details(span_row, timestamp, duration, depth, child_ids)
+        # add_layout_details(span_row, timestamp, duration, depth, child_ids)
 
         for service_name in span_row.serviceNames:
             increment_entry(service_name_to_count, service_name)
 
         model_view.spans.append(span_row)
 
-    model_view.rootSpan = {}
+    model_view.rootSpan = RootSpan()
     root_span = root.queue_root_most_spans()[0]
     model_view.rootSpan.serviceName = get_service_name(
         root_span.span.localEndpoint) or get_service_name(
         root_span.span.remoteEndpoint) or 'unknown'
     model_view.rootSpan.spanName = root_span.span.name or 'unknown'
 
-    service_names = list(service_name_to_count.keys()).sort()
-    model_view.serviceNameAndSpanCounts = list(map(lambda service_name: {
-        "serviceName": service_name,
-        "spanCount": service_name_to_count[service_name]
-    }, service_names))
+    service_names: list[str] = sorted(list(service_name_to_count.keys()))
+    service_name_list: list[ServiceNameAndSpanCount] = []
+    for service_name in service_names:
+        service_name_list.append(ServiceNameAndSpanCount(
+            serviceName=service_name,
+            spanCount=service_name_to_count[service_name]
+        ))
+    model_view.serviceNameAndSpanCounts = service_name_list
 
     # model_view.spansBackup = model_view.spans
 
