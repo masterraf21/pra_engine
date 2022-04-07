@@ -1,4 +1,4 @@
-from zipkin import SpanNode, SpanNodeBuilder, utils, query, span_cleaner as cleaner
+from zipkin import SpanNode, SpanNodeBuilder, span_row, utils, query, span_cleaner as cleaner, span_row as row
 import unittest
 import random
 import string
@@ -17,7 +17,7 @@ def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-class TestCleaner(unittest.TestCase):
+class TestSpanCleaner(unittest.TestCase):
     def test_sort_annotations(self):
         l = [An(timestamp=12, value="tag"), An(
             timestamp=12, value="tag"), An(timestamp=3, value="3")]
@@ -25,7 +25,37 @@ class TestCleaner(unittest.TestCase):
         print(sorted)
 
 
+class TestSpanRow(unittest.TestCase):
+    def test_get_error_type_current(self):
+        s1 = Span(id="a", traceId="a",
+                  tags={
+                      "err": "Halo error"
+                  },
+                  annotations=[An(timestamp=123, value="error")]
+                  )
+        err = "a"
+        res = row.get_error_type(s1, err)
+        self.assertEqual(res, "a")
+
+    def test_get_error_type_transient(self):
+        s1 = Span(id="a", traceId="a",
+                  tags={
+                      "err": "Halo error"
+                  },
+                  annotations=[]
+                  )
+        err = "a"
+        res = row.get_error_type(s1, err)
+        self.assertEqual(res, "transient")
+
+
 class TestModel(unittest.TestCase):
+    def test_enumerate_annotations(self):
+        an = [An(timestamp=123, value="error"),
+              An(timestamp=12, value="hiyas")]
+        res = [i for i, j in enumerate(an) if j.value == "er"]
+        print(res)
+
     def test_delete(self):
         s1 = Span(id="a", traceId="a",
                   localEndpoint=Endpoint(ipv4="123"),

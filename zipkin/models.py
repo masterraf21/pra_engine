@@ -48,5 +48,45 @@ class Span(BaseModel):
     tags: Optional[dict[str, str]]
 
 
+class AdjustedAnnotation(BaseModel):
+    value: str
+    timestamp: int
+    endpoint: Endpoint
+    relativeTime: Optional[str]
+
+
+class AdjustedSpan(BaseModel):
+    spanId: str
+    spanName: str
+    serviceName: str
+    parentId: Optional[str]
+    childIds: list[str]
+    serviceNames: list[str]
+    timestamp: int
+    duration: float
+    durationStr: str
+    tags: list[dict[str, str]]
+    annotations: list[AdjustedAnnotation]
+    errorType: str
+    depth: int
+    width: int
+    left: int
+
+
+class ServiceNameAndSpanCount(BaseModel):
+    serviceName: str
+    spanCount: int
+
+
+class RootSpan(BaseModel):
+    serviceName: str
+    spanName: str
+
+
 class AdjustedTrace(BaseModel):
-    id: str
+    traceId: str
+    serviceNameAndSpanCounts: list[ServiceNameAndSpanCount]
+    duration: int
+    durationStr: str
+    rootSpan: RootSpan
+    spans: list[AdjustedSpan]

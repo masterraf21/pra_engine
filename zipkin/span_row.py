@@ -1,18 +1,18 @@
 from functools import cmp_to_key
 from .utils import *
 from .trace_constants import ConstantNames
+from .models import *
 
 
-def get_error_type(span: dict, current_error_type):
+def get_error_type(span: Span, current_error_type):
     if current_error_type == "critical":
         return current_error_type
-    # TODO: Exsception
-    if span["tags"]["error"]:
+
+    if "error" in span.tags:
         return "critical"
-    try:
-        res = [i for i, j in enumerate(
-            span["annotations"]) if j["value"] == "error"]
-    except ValueError:
+
+    res = [i for i, j in enumerate(span.annotations) if j.value == "error"]
+    if not res:
         return "transient"
 
     return current_error_type

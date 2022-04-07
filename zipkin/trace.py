@@ -1,5 +1,4 @@
 from functools import cmp_to_key
-from inspect import trace
 from pydash import order_by
 from .span_cleaner import compare
 from .span_node import SpanNode
