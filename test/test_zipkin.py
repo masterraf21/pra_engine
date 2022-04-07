@@ -1,9 +1,62 @@
-from zipkin import SpanNode, SpanNodeBuilder, span_row, utils, query, span_cleaner as cleaner, span_row as row
+from zipkin import SpanNode, SpanNodeBuilder, clock_skew, span_row, utils, query, span_cleaner as cleaner, span_row as row
 import unittest
 import random
 import string
 from config import settings
-from zipkin.models import Span, TraceParam, Annotation as An, Endpoint
+from zipkin.models import Span, TraceParam, Annotation as An, Endpoint, DependencyLink
+import json
+from pathlib import Path
+import requests
+from config import settings
+from pydantic import parse_obj_as
+
+API = settings.zipkin_api
+
+
+def query_traces(param: TraceParam) -> list[list[Span]]:
+    r = requests.get(url=f'{API}/traces', params=param.dict())
+    traces = r.json()
+    m = parse_obj_as(list[list[Span]], traces)
+    return m
+
+
+def query_trace(id: str) -> list[Span]:
+    r = requests.get(url=f'{API}/trace/{id}')
+    spans = r.json()
+    m = parse_obj_as(list[Span], spans)
+    return m
+
+
+def query_trace_many(ids: list[str]) -> list[list[Span]]:
+    ids_str = "".join(ids)
+    r = requests.get(url=f'{API}/traceMany', params={
+        "traceIds": ids_str
+    })
+    traces = r.json()
+    m = parse_obj_as(list[list[Span]], traces)
+    return m
+
+
+def query_span_names(service_name: str) -> list[str]:
+    r = requests.get(url=f'{API}/spans', params={
+        "serviceName": service_name
+    })
+    return r.json()
+
+
+def query_dependencies(end_ts: int, lookback: int = None) -> list[DependencyLink]:
+    r = requests.get(url=f'{API}/dependencies', params={
+        "endTs": end_ts,
+        "lookback": lookback
+    })
+    deps = r.json()
+    m = parse_obj_as(list[DependencyLink], deps)
+    return m
+
+
+def query_services() -> list[str]:
+    r = requests.get(url=f'{API}/services')
+    return r.json()
 
 
 spanExample = {
@@ -15,6 +68,28 @@ spanExample = {
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
+
+
+def get_json(file_name: str):
+    path = Path(__file__).parent / f"json/{file_name}"
+    with open(path, 'r') as f:
+        j = json.loads(f.read())
+        return j
+
+
+def get_trace(file_name: str) -> list[Span]:
+    j = get_json(file_name)
+    trace = parse_obj_as(list[Span], j)
+    return trace
+
+
+class TestAdjustedTrace(unittest.TestCase):
+
+    def test_trace_clock_skew(self):
+        file = '8.json'
+        trace = get_trace(file)
+        skewed = clock_skew.tree_corrected_for_clock_skew(trace)
+        print(skewed.to_string)
 
 
 class TestSpanCleaner(unittest.TestCase):

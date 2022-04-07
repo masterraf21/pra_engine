@@ -206,16 +206,16 @@ def span_comparator(a: Span, b: Span):
 
 
 def clean(span: Span) -> Span:
+    id = span.id.zfill(16)
     res = Span(
-        traceId=normalize_traceId(span.traceId)
+        traceId=normalize_traceId(span.traceId),
+        id=id
     )
 
-    id = span.id.zfill(16)
     if (span.parentId):
         parentId = span.parentId.zfill(16)
         if (parentId != id):
             res.parentId = parentId
-    res.id = id
 
     if span.name and span.name != "" and span.name != "unknown":
         res.name = span.name

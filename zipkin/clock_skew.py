@@ -115,7 +115,7 @@ def adjust(node: SpanNode, skew_from_parent: Optional[ClockSkew] = None):
         adjust(child, skew)
 
 
-def tree_corrected_for_clock_skew(spans: list[Span], debug=False):
+def tree_corrected_for_clock_skew(spans: list[Span], debug=False) -> SpanNode:
     if len(spans) == 0:
         return SpanNode()
 
