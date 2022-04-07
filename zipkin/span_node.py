@@ -8,8 +8,8 @@ from typing import Callable
 
 class SpanNode:
     def __init__(self, span: Span = None) -> None:
-        self._parent: 'SpanNode' = None
-        self._span = Span
+        self._parent: Optional['SpanNode'] = None
+        self._span = Optional[Span]
         self._children: list['SpanNode'] = []
 
     @property
@@ -54,7 +54,7 @@ class SpanNode:
                 queue.append(children[i])
 
     def queue_root_most_spans(self) -> deque['SpanNode']:
-        queue = deque()
+        queue: deque['SpanNode'] = deque()
         if self.span == None:
             for child in self.children:
                 queue.append(child)
@@ -76,9 +76,9 @@ class SpanNode:
 class SpanNodeBuilder:
     def __init__(self, debug=False) -> None:
         self._debug = debug
-        self._rootSpan = None
-        self._keyToNode = {}
-        self._spanToParent = {}
+        self._rootSpan: Optional[SpanNode] = None
+        self._keyToNode: dict[str, SpanNode] = {}
+        self._spanToParent: dict[str, str] = {}
 
     def _index(self, span: Span):
         idKey, parentKey = None, None
@@ -130,9 +130,7 @@ class SpanNodeBuilder:
         cleaned = merge_v2_by_id(spans)
         length = len(cleaned)
 
-        traceId = None
-        if length > 0:
-            traceId = cleaned[0].traceId
+        traceId = cleaned[0].traceId
 
         if self._debug:
             print(f'building trace tree: traceId={traceId}')
@@ -168,7 +166,7 @@ class SpanNodeBuilder:
 
 
 def sort_tree_by_timestamp(root: SpanNode):
-    queue = deque()
+    queue: deque[SpanNode] = deque()
     queue.append(root)
 
     while len(queue) > 0:
@@ -181,12 +179,12 @@ def sort_tree_by_timestamp(root: SpanNode):
             queue.append(children[i])
 
 
-def key_string(id, shared: bool = False, endpoint: Endpoint = None):
+def key_string(id: str, shared: Optional[bool] = False, endpoint: Endpoint = None) -> str:
     if not shared:
         return id
-    endPointSTring = str(endpoint.dict()) if endpoint else 'x'
+    endPointString = str(endpoint.dict()) if endpoint else 'x'
 
-    return f"${id}-${endPointSTring}"
+    return f"${id}-${endPointString}"
 
 
 def sort_children(node: SpanNode):

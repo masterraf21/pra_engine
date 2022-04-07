@@ -1,6 +1,5 @@
 from functools import cmp_to_key
-from logging.config import dictConfig
-from .models import Span, Endpoint
+from .models import *
 from pydash import union_with, is_equal, sort_by
 
 
@@ -54,7 +53,7 @@ def compare_endpoint(left: Endpoint | None, right: Endpoint | None):
 
 
 def is_endpoint(endpoint: Endpoint | None):
-    return endpoint and len(endpoint) > 0
+    return endpoint
 
 
 def merge_endpoint(left: Endpoint | None, right: Endpoint | None) -> Endpoint | None:
@@ -65,8 +64,8 @@ def merge_endpoint(left: Endpoint | None, right: Endpoint | None) -> Endpoint | 
     if left and right:
         e = {**left.dict(), **right.dict()}
         return Endpoint(**e)
-    if not left and not right:
-        return None
+
+    return None
 
 
 def merge(left: Span, right: Span) -> Span:
@@ -106,8 +105,10 @@ def merge(left: Span, right: Span) -> Span:
         res.annotations = sort_by(union_with(left.annotations, right.annotations, is_equal),
                                   ["timestamp", "value"])
 
+    return res
 
-def try_merge(current: Endpoint | None, endpoint: Endpoint | None) -> bool:
+
+def try_merge(current: Endpoint, endpoint: Endpoint | None) -> bool:
     if not endpoint:
         return True
     if (current.serviceName and endpoint.serviceName and
@@ -127,6 +128,8 @@ def try_merge(current: Endpoint | None, endpoint: Endpoint | None) -> bool:
         current.ipv6 = endpoint.ipv6
     if not current.port:
         current.port = endpoint.port
+
+    return True
 
 
 def merge_v2_by_id(spans: list[Span]) -> list[Span]:
@@ -149,7 +152,7 @@ def merge_v2_by_id(spans: list[Span]) -> list[Span]:
 
     last = None
     for i in range(length):
-        span: Span = result[i]
+        span = result[i]
 
         if len(span.traceId) != len(traceId):
             span.traceId = traceId

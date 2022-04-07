@@ -1,3 +1,4 @@
+import string
 from typing import Literal, Optional
 from pydantic import BaseModel
 
@@ -48,29 +49,53 @@ class Span(BaseModel):
     tags: Optional[dict[str, str]]
 
 
+class CleanedSpan(BaseModel):
+    id: str
+    traceId: str
+    parentId: str
+    name: str
+    kind: Literal["CLIENT", "SERVER", "PRODUCER", "CONSUMER"]
+    timestamp: int
+    duration: int
+    debug: bool
+    shared: bool
+    localEndpoint: Endpoint
+    remoteEndpoint: Endpoint
+    annotations: list[Annotation]
+    tags: dict[str, str]
+
+
 class AdjustedAnnotation(BaseModel):
+    isDerived: Optional[bool]
     value: str
     timestamp: int
-    endpoint: Endpoint
+    endpoint: str
     relativeTime: Optional[str]
+
+
+class AdjustedTag(BaseModel):
+    key: str
+    value: str
+    endpoints: list[str]
 
 
 class AdjustedSpan(BaseModel):
     spanId: str
     spanName: str
-    serviceName: str
+    serviceName: Optional[str]
     parentId: Optional[str]
     childIds: list[str]
     serviceNames: list[str]
-    timestamp: int
-    duration: float
+    timestamp: Optional[int]
+    duration: Optional[float]
     durationStr: str
-    tags: list[dict[str, str]]
+    tags: list[AdjustedTag]
     annotations: list[AdjustedAnnotation]
     errorType: str
     depth: int
     width: int
     left: int
+    debug: bool
 
 
 class ServiceNameAndSpanCount(BaseModel):
@@ -87,6 +112,7 @@ class AdjustedTrace(BaseModel):
     traceId: str
     serviceNameAndSpanCounts: list[ServiceNameAndSpanCount]
     duration: int
+    depth: int
     durationStr: str
     rootSpan: RootSpan
     spans: list[AdjustedSpan]
