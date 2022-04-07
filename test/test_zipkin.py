@@ -1,6 +1,7 @@
-from zipkin import SpanNode, SpanNodeBuilder, utils
+from zipkin import SpanNode, SpanNodeBuilder, utils, query
 import unittest
 from config import settings
+from zipkin.models import Span, TraceParam
 
 spanExample = {
     "A": 1,
@@ -9,9 +10,38 @@ spanExample = {
 }
 
 
+class TestQuery(unittest.TestCase):
+    def test_query_traces(self):
+        param = TraceParam()
+        result = query.query_traces(param)
+
+        self.assertEqual(type(result), list)
+        if len(result) > 0:
+            self.assertEqual(type(result[0]), list)
+            if len(result[0]) > 0:
+                span = result[0][0]
+                self.assertEqual(type(span), Span)
+                print(span.dict())
+
+    def test_query_trace(self):
+        id = "8cde39a41eef18e8"
+        result = query.query_trace(id)
+
+        span = result[0]
+        self.assertEqual(id, span.traceId)
+        span.id = "1"
+        print(span.traceId)
+        self.assertEqual(span.id, "1")
+
+        self.assertEqual(type(result), list)
+        if len(result) > 0:
+            self.assertEqual(type(result[0]), Span)
+
+
 class TestDynaconf(unittest.TestCase):
     def test_url(self):
-        self.assertEqual(settings.zipkin_api, "http://localhost:9441")
+        self.assertEqual(settings.zipkin_api,
+                         "http://localhost:9411/zipkin/api/v2")
 
 
 class TestSpanUtils(unittest.TestCase):

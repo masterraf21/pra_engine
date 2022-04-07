@@ -1,7 +1,16 @@
-
-from __future__ import annotations
 from typing import Dict, List, Literal, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+
+
+class TraceParam(BaseModel):
+    serviceName: Optional[str]
+    spanName: Optional[str]
+    annotationQuery: Optional[str]
+    minDuration: Optional[int]
+    maxDuration: Optional[int]
+    endTs: Optional[int]
+    lookback: Optional[int]
+    limit: Optional[int]
 
 
 class Endpoint(BaseModel):
@@ -16,7 +25,7 @@ class Annotation(BaseModel):
     value: int
 
 
-class Model(BaseModel):
+class Span(BaseModel):
     id: str
     traceId: str
     parentId: Optional[str]
@@ -25,10 +34,11 @@ class Model(BaseModel):
     timestamp: Optional[int]
     duration: Optional[int]
     debug: Optional[bool]
-    localEndpoint: Endpoint
-    remoteEndpoint: Endpoint
-    annotations: List[Annotation]
-    tags: Dict[str, str]
+    shared: Optional[bool]
+    localEndpoint: Optional[Endpoint]
+    remoteEndpoint: Optional[Endpoint]
+    annotations: Optional[list[Annotation]]
+    tags: Optional[dict[str, str]]
 
 
 class AdjustedTrace(BaseModel):

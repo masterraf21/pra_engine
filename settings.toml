@@ -1,1 +1,1 @@
-zipkin_api = "http://localhost:9441"
+zipkin_api = "http://localhost:9411/zipkin/api/v2"
