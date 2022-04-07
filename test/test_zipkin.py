@@ -1,13 +1,64 @@
-from zipkin import SpanNode, SpanNodeBuilder, utils, query
+from zipkin import SpanNode, SpanNodeBuilder, utils, query, span_cleaner as cleaner
 import unittest
+import random
+import string
 from config import settings
-from zipkin.models import Span, TraceParam
+from zipkin.models import Span, TraceParam, Annotation as An, Endpoint
+
 
 spanExample = {
     "A": 1,
     "B": 2,
     "C": 3
 }
+
+
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
+
+
+class TestCleaner(unittest.TestCase):
+    def test_sort_annotations(self):
+        l = [An(timestamp=12, value="tag"), An(
+            timestamp=12, value="tag"), An(timestamp=3, value="3")]
+        sorted = cleaner.sort_annotations(l)
+        print(sorted)
+
+
+class TestModel(unittest.TestCase):
+    def test_delete(self):
+        s1 = Span(id="a", traceId="a",
+                  localEndpoint=Endpoint(ipv4="123"),
+                  shared=True)
+        self.assertTrue(s1.shared)
+        s1.shared = None
+        self.assertIsNone(s1.shared)
+
+    def test_spread(self):
+        s1 = Span(id="a", traceId="a",
+                  localEndpoint=Endpoint(ipv4="123"))
+        s2 = Span(id="b", traceId="b", remoteEndpoint=Endpoint(
+            ipv6="123", ipv4="111", port=123))
+        ee = {**s1.localEndpoint.dict(), **s2.remoteEndpoint.dict()}
+        e = Endpoint(**ee)
+        print(ee)
+        print(e)
+
+    def test_empty_model(self):
+        empty = Endpoint(serviceName="hey", port=1289)
+        self.assertTrue(empty.serviceName)
+        self.assertTrue(empty.port)
+        self.assertFalse(empty.serviceName and empty.ipv4)
+
+    def test_annotations_list(self):
+        ann = An(
+            timestamp=random.randint(1000000, 9999999999),
+            value=id_generator()
+        )
+
+        l = [ann for _ in range(4)]
+        d = dict(l)
+        print(type(d))
 
 
 class TestQuery(unittest.TestCase):

@@ -46,15 +46,3 @@ def check_list(a) -> bool:
         return type(a) == list
     except KeyError:
         return False
-
-
-def key_string(id, shared=False, endpoint=None):
-    if not shared:
-        return id
-    endPointSTring = json.dumps(endpoint) if endpoint else 'x'
-
-    return f"${id}-${endPointSTring}"
-
-
-def node_by_timestamp(a, b):
-    return compare(a["span"]["timestamp"], b["span"]["timestamp"])

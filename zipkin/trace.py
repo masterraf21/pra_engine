@@ -2,7 +2,7 @@ from functools import cmp_to_key
 from inspect import trace
 from pydash import order_by
 from .span_cleaner import compare
-from .span import SpanNode
+from .span_node import SpanNode
 from .span_row import get_service_name, new_span_row
 from .utils import *
 

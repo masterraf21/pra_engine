@@ -1,4 +1,4 @@
-from .span import *
+from .span_node import *
 
 
 class ClockSkew:

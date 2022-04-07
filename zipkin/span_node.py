@@ -1,4 +1,5 @@
 import json
+from .models import *
 from .utils import *
 from .span_cleaner import *
 from collections import deque
@@ -6,9 +7,9 @@ from typing import Callable
 
 
 class SpanNode:
-    def __init__(self, span: dict = None) -> None:
+    def __init__(self, span: Span = None) -> None:
         self._parent: 'SpanNode' = None
-        self._span = span
+        self._span = Span
         self._children: list['SpanNode'] = []
 
     @property
@@ -67,7 +68,7 @@ class SpanNode:
 
     def to_string(self) -> str:
         if self.span:
-            return f"SpanNode({json.dumps(self.span, separators=(',', ':'))})"
+            return f"SpanNode({self.span.dict()})"
 
         return "SpanNode()"
 
@@ -79,61 +80,60 @@ class SpanNodeBuilder:
         self._keyToNode = {}
         self._spanToParent = {}
 
-    def _index(self, span: dict):
+    def _index(self, span: Span):
         idKey, parentKey = None, None
 
-        if span["shared"]:
-            idKey = key_string(span["id"], True, span["localEndpoint"])
-            parentKey = span["id"]
+        if span.shared:
+            idKey = key_string(span.id, True, span.localEndpoint)
+            parentKey = span.id
         else:
-            idKey = span["id"]
-            parentKey = span["parentId"]
+            idKey = span.id
+            parentKey = span.parentId
 
         self._spanToParent[idKey] = parentKey
 
-    def _process(self, span: dict):
-        endpoint = span["localEndpoint"]
-        key = key_string(span["id"], span["shared"], span["localEndpoint"])
-        noEndpointKey = key_string(
-            span["id", span["shared"]]) if endpoint else key
+    def _process(self, span: Span):
+        endpoint = span.localEndpoint
+        key = key_string(span.id, span.shared, span.localEndpoint)
+        noEndpointKey = key_string(span.id, span.shared) if endpoint else key
 
         parent = None
-        if span["shared"]:
-            parent = span["id"]
-        elif span["parentId"]:
-            parent = key_string(span["parentId"], True, endpoint)
-            if self._spanToParent[parent]:
+        if span.shared:
+            parent = span.id
+        elif span.parentId:
+            parent = key_string(span.parentId, True, endpoint)
+            if key_exists(self._spanToParent, parent):
                 self._spanToParent[noEndpointKey] = parent
             else:
-                parent = span["parentId"]
+                parent = span.parentId
         elif self._rootSpan:
             if self._debug:
                 prefix = "attributing span missing parent to root"
                 print(
-                    f'{prefix}: traceId={span["traceId"]}, rootId={self._rootSpan["span"]["id"]}, id={span["id"]}')
+                    f'{prefix}: traceId={span.traceId}, rootId={self._rootSpan.span.id}, id={span.id}')
 
         node = SpanNode(span)
 
         if not parent and not self._rootSpan:
             self._rootSpan = node
             del self._spanToParent[noEndpointKey]
-        elif span["shared"]:
+        elif span.shared:
             self._keyToNode[key] = node
             self._keyToNode[noEndpointKey] = node
         else:
             self._keyToNode[noEndpointKey] = node
 
-    def build(self, spans: list[dict]):
+    def build(self, spans: list[Span]):
         if len(spans) == 0:
             raise ValueError("Trace was empty")
 
         cleaned = merge_v2_by_id(spans)
         length = len(cleaned)
-        # TODO: Potential Bug
-        traceId_many = [sub['traceId'] for sub in cleaned]
+
         traceId = None
-        if traceId_many:
-            traceId = traceId_many[0]
+        if length > 0:
+            traceId = cleaned[0].traceId
+
         if self._debug:
             print(f'building trace tree: traceId={traceId}')
 
@@ -150,11 +150,13 @@ class SpanNodeBuilder:
                 )
             self._rootSpan = SpanNode()
 
-        for key in self._spanToParent:
+        for key in self._spanToParent.keys():
             child = self._keyToNode[key]
-            parent = self._keyToNode[self._spanToParent[key]]
+            parent = None
+            parent_exist = self._spanToParent[key] in self._keyToNode
+            if parent_exist:
+                parent = self._keyToNode[self._spanToParent[key]]
 
-            # TODO: Potential Bug
             if not parent:
                 self._rootSpan.add_child(child)
             else:
@@ -179,6 +181,18 @@ def sort_tree_by_timestamp(root: SpanNode):
             queue.append(children[i])
 
 
+def key_string(id, shared: bool = False, endpoint: Endpoint = None):
+    if not shared:
+        return id
+    endPointSTring = str(endpoint.dict()) if endpoint else 'x'
+
+    return f"${id}-${endPointSTring}"
+
+
 def sort_children(node: SpanNode):
     if len(node.children) > 0:
-        sorted(node.children, cmp_to_key=node_by_timestamp)
+        sorted(node.children, key=cmp_to_key(node_by_timestamp))
+
+
+def node_by_timestamp(a: SpanNode, b: SpanNode):
+    return compare(a.span.timestamp, b.span.timestamp)

@@ -29,7 +29,7 @@ class Endpoint(BaseModel):
 
 class Annotation(BaseModel):
     timestamp: int
-    value: int
+    value: str
 
 
 class Span(BaseModel):
