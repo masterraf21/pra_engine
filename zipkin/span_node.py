@@ -9,7 +9,7 @@ from typing import Callable
 class SpanNode:
     def __init__(self, span: Span = None) -> None:
         self._parent: Optional['SpanNode'] = None
-        self._span = Optional[Span]
+        self._span: Optional[Span] = span
         self._children: list['SpanNode'] = []
 
     @property
@@ -67,6 +67,7 @@ class SpanNode:
         return queue
 
     def to_string(self) -> str:
+        print(self.span)
         if self.span:
             return f"SpanNode({self.span.dict()})"
 
@@ -193,4 +194,11 @@ def sort_children(node: SpanNode):
 
 
 def node_by_timestamp(a: SpanNode, b: SpanNode):
-    return compare(a.span.timestamp, b.span.timestamp)
+    atime = None
+    btime = None
+    if a.span:
+        atime = a.span.timestamp
+    if b.span:
+        btime = b.span.timestamp
+
+    return compare(atime, btime)

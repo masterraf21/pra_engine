@@ -87,9 +87,11 @@ class TestAdjustedTrace(unittest.TestCase):
 
     def test_trace_clock_skew(self):
         file = '8.json'
-        trace = get_trace(file)
+        # trace = get_trace(file)
+        trace: list[Span] = []
+        print(len(trace))
         skewed = clock_skew.tree_corrected_for_clock_skew(trace)
-        print(skewed.to_string)
+        print(skewed.to_string())
 
 
 class TestSpanCleaner(unittest.TestCase):
