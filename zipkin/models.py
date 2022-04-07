@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, Optional
+from typing import Literal, Optional
 from pydantic import BaseModel
 
 
@@ -11,6 +11,13 @@ class TraceParam(BaseModel):
     endTs: Optional[int]
     lookback: Optional[int]
     limit: Optional[int]
+
+
+class DependencyLink(BaseModel):
+    parent: str
+    child: str
+    callCount: int
+    errorCount: Optional[int]
 
 
 class Endpoint(BaseModel):

@@ -11,7 +11,7 @@ spanExample = {
 
 
 class TestQuery(unittest.TestCase):
-    def test_query_traces(self):
+    def test_query_traces_empty(self):
         param = TraceParam()
         result = query.query_traces(param)
 
@@ -22,6 +22,27 @@ class TestQuery(unittest.TestCase):
                 span = result[0][0]
                 self.assertEqual(type(span), Span)
                 print(span.dict())
+
+    def test_query_traces_1(self):
+        param = TraceParam(
+            serviceName="main"
+        )
+        result = query.query_traces(param)
+
+        self.assertEqual(type(result), list)
+        if len(result) > 0:
+            self.assertEqual(type(result[0]), list)
+            if len(result[0]) > 0:
+                span = result[0][0]
+                self.assertEqual(type(span), Span)
+                print(span.dict())
+
+    def test_query_services(self):
+        result = query.query_services()
+        print(result)
+        self.assertEqual(type(result), list)
+        if len(result) > 0:
+            self.assertEqual(type(result[0]), str)
 
     def test_query_trace(self):
         id = "8cde39a41eef18e8"
