@@ -46,13 +46,16 @@ def format_endpoint(endpoint: Optional[Endpoint]) -> str | None:
 
 def to_annotation_row(a: Annotation, local_formatted: str | None,
                       is_derived: bool = False) -> AdjustedAnnotation:
+    value = a.value
+    if a.value in ConstantNames:
+        value = ConstantNames[a.value]
+    endpoint = local_formatted if local_formatted else "unknown"
     res = AdjustedAnnotation(
         isDerived=is_derived,
-        value=ConstantNames[a.value] or a.value,
-        timestamp=a.timestamp
+        value=value,
+        timestamp=a.timestamp,
+        endpoint=endpoint
     )
-    if local_formatted:
-        res.endpoint = local_formatted
     return res
 
 
@@ -184,12 +187,17 @@ def parse_tag_rows(span: Span) -> list[AdjustedTag]:
     keys = list(span.tags.keys()) or []
     if len(keys) > 0:
         for key in keys:
+            key_constant = key
+            if key in ConstantNames:
+                key_constant = ConstantNames[key]
+
             tag_row = AdjustedTag(
-                key=ConstantNames[key] or key,
+                key=key_constant,
                 value=span.tags[key]
             )
             if local_formatted:
                 tag_row.endpoints = [local_formatted]
+
             tag_rows.append(tag_row)
 
     if not span.kind and len(
@@ -213,7 +221,7 @@ def parse_tag_rows(span: Span) -> list[AdjustedTag]:
     if span.remoteEndpoint:
         tag_rows.append(AdjustedTag(
             key=addr or "Server Address",
-            value=format_endpoint(span.remoteEndpoint)
+            value=format_endpoint(span.remoteEndpoint),
         ))
 
     return tag_rows
@@ -254,7 +262,14 @@ def new_span_row(spans_to_merge: list[Span], is_leaf_span: bool) -> AdjustedSpan
         serviceNames=[],
         annotations=[],
         tags=[],
-        errorType="none"
+        errorType="none",
+        spanName="",
+        childIds=[],
+        durationStr="",
+        depth=0,
+        width=0.0,
+        left=0,
+        debug=False
     )
 
     shared_timestamp = None

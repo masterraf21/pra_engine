@@ -103,7 +103,14 @@ def detailed_trace_summary(root: SpanNode):
     model_view: AdjustedTrace = AdjustedTrace(
         traceId=queue[0].span.traceId,
         depth=0,
-        spans=[]
+        spans=[],
+        serviceNameAndSpanCounts=[],
+        duration=0,
+        durationStr="",
+        rootSpan=RootSpan(
+            serviceName="",
+            spanName=""
+        )
     )
 
     timestamp, duration = get_trace_timestamp_and_duration(root)
@@ -148,7 +155,6 @@ def detailed_trace_summary(root: SpanNode):
 
         model_view.spans.append(span_row)
 
-    model_view.rootSpan = RootSpan()
     root_span = root.queue_root_most_spans()[0]
     model_view.rootSpan.serviceName = get_service_name(
         root_span.span.localEndpoint) or get_service_name(

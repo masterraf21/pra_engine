@@ -76,7 +76,7 @@ class AdjustedAnnotation(BaseModel):
 class AdjustedTag(BaseModel):
     key: str
     value: str
-    endpoints: list[str]
+    endpoints: Optional[list[str]]
 
 
 class AdjustedSpan(BaseModel):

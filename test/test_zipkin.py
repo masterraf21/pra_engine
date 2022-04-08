@@ -1,4 +1,4 @@
-from zipkin import SpanNode, SpanNodeBuilder, clock_skew, span_row, utils, query, span_cleaner as cleaner, span_row as row
+from zipkin import span_node, clock_skew, utils, query, span_cleaner as cleaner, span_row as row, trace
 import unittest
 import random
 import string
@@ -6,58 +6,8 @@ from config import settings
 from zipkin.models import Span, TraceParam, Annotation as An, Endpoint, DependencyLink
 import json
 from pathlib import Path
-import requests
 from config import settings
 from pydantic import parse_obj_as
-
-API = settings.zipkin_api
-
-
-def query_traces(param: TraceParam) -> list[list[Span]]:
-    r = requests.get(url=f'{API}/traces', params=param.dict())
-    traces = r.json()
-    m = parse_obj_as(list[list[Span]], traces)
-    return m
-
-
-def query_trace(id: str) -> list[Span]:
-    r = requests.get(url=f'{API}/trace/{id}')
-    spans = r.json()
-    m = parse_obj_as(list[Span], spans)
-    return m
-
-
-def query_trace_many(ids: list[str]) -> list[list[Span]]:
-    ids_str = "".join(ids)
-    r = requests.get(url=f'{API}/traceMany', params={
-        "traceIds": ids_str
-    })
-    traces = r.json()
-    m = parse_obj_as(list[list[Span]], traces)
-    return m
-
-
-def query_span_names(service_name: str) -> list[str]:
-    r = requests.get(url=f'{API}/spans', params={
-        "serviceName": service_name
-    })
-    return r.json()
-
-
-def query_dependencies(end_ts: int, lookback: int = None) -> list[DependencyLink]:
-    r = requests.get(url=f'{API}/dependencies', params={
-        "endTs": end_ts,
-        "lookback": lookback
-    })
-    deps = r.json()
-    m = parse_obj_as(list[DependencyLink], deps)
-    return m
-
-
-def query_services() -> list[str]:
-    r = requests.get(url=f'{API}/services')
-    return r.json()
-
 
 spanExample = {
     "A": 1,
@@ -87,11 +37,24 @@ class TestAdjustedTrace(unittest.TestCase):
 
     def test_trace_clock_skew(self):
         file = '8.json'
-        # trace = get_trace(file)
-        trace: list[Span] = []
-        print(len(trace))
-        skewed = clock_skew.tree_corrected_for_clock_skew(trace)
-        print(skewed.to_string())
+        id = "4e863982c330afe0"
+        trace = get_trace(file)
+        self.assertEqual(8, len(trace))
+
+        node = clock_skew.tree_corrected_for_clock_skew(trace)
+        self.assertIsNotNone(node.span)
+        self.assertEqual(id, node.span.traceId)
+        self.assertEqual(4, len(node.children))
+
+        # print(node.to_string())
+
+    def test_adjusted_trace(self):
+        file = '8.json'
+        id = "4e863982c330afe0"
+        spans = get_trace(file)
+        node = clock_skew.tree_corrected_for_clock_skew(spans)
+        adjusted_trace = trace.detailed_trace_summary(node)
+        self.assertEqual(adjusted_trace.traceId, id)
 
 
 class TestSpanCleaner(unittest.TestCase):
@@ -246,27 +209,27 @@ class TestSpanUtils(unittest.TestCase):
         self.assertEqual(t2, False)
 
 
-class TestSpanNode(unittest.TestCase):
+class TestsSpanNode(unittest.TestCase):
 
     def test_init_empty_node(self):
-        spanNode = SpanNode()
-        self.assertEqual(type(spanNode), SpanNode)
+        span_node.SpanNode = span_node.span_node.SpanNode()
+        self.assertEqual(type(span_node.SpanNode), span_node.SpanNode)
 
     def test_init_not_empty(self):
-        node = SpanNode(spanExample)
+        node = span_node.SpanNode(spanExample)
         self.assertEqual(node.span, spanExample)
         self.assertEqual(node.parent, None)
         self.assertEqual(len(node.children), 0)
 
     def test_parenting(self):
-        node = SpanNode(spanExample)
-        nodeParent = SpanNode(spanExample)
+        node = span_node.SpanNode(spanExample)
+        nodeParent = span_node.SpanNode(spanExample)
         node.parent = nodeParent
         self.assertEqual(node.parent, nodeParent)
 
     def test_add_hild(self):
-        node = SpanNode(spanExample)
-        child = SpanNode(spanExample)
+        node = span_node.SpanNode(spanExample)
+        child = span_node.SpanNode(spanExample)
         node.add_child(child)
         self.assertEqual(len(node.children), 1)
         children = node.children
@@ -274,20 +237,20 @@ class TestSpanNode(unittest.TestCase):
         self.assertEqual(child.parent, node)
 
     def test_add_child_exception(self):
-        node = SpanNode(spanExample)
-        child = SpanNode(spanExample)
+        node = span_node.SpanNode(spanExample)
+        child = span_node.SpanNode(spanExample)
         with self.assertRaises(ValueError):
             node.add_child(node)
 
     def test_queueRoot(self):
-        node = SpanNode(spanExample)
+        node = span_node.SpanNode(spanExample)
 
     def test_to_string(self):
-        node = SpanNode(spanExample)
+        node = span_node.SpanNode(spanExample)
         # print(node.toString())
-        nodeStr = 'SpanNode({"A":1,"B":2,"C":3})'
+        nodeStr = 'span_node.SpanNode({"A":1,"B":2,"C":3})'
         self.assertEqual(nodeStr, node.to_string())
 
 
-class TestSpanNodeBuilder(unittest.TestCase):
+class TestsSpanNodeBuilder(unittest.TestCase):
     pass

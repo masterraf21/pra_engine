@@ -67,7 +67,6 @@ class SpanNode:
         return queue
 
     def to_string(self) -> str:
-        print(self.span)
         if self.span:
             return f"SpanNode({self.span.dict()})"
 
@@ -194,11 +193,4 @@ def sort_children(node: SpanNode):
 
 
 def node_by_timestamp(a: SpanNode, b: SpanNode):
-    atime = None
-    btime = None
-    if a.span:
-        atime = a.span.timestamp
-    if b.span:
-        btime = b.span.timestamp
-
-    return compare(atime, btime)
+    return compare(a.span.timestamp, b.span.timestamp)
