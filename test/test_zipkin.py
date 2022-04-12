@@ -1,4 +1,6 @@
-from zipkin import span_node, clock_skew, utils, query, span_cleaner as cleaner, span_row as row, trace
+from nbformat import write
+from zipkin import span_node, clock_skew, utils, query, span_cleaner as cleaner, span_row as row, trace as trace_lib
+from zipkin.helper import adjust_trace, adjust_traces
 import unittest
 import random
 import string
@@ -27,6 +29,12 @@ def get_json(file_name: str):
         return j
 
 
+def write_json(content: str, file_name: str):
+    path = Path(__file__).parent / f"json/{file_name}"
+    with open(path, "w") as outfile:
+        outfile.write(content)
+
+
 def get_trace(file_name: str) -> list[Span]:
     j = get_json(file_name)
     trace = parse_obj_as(list[Span], j)
@@ -34,6 +42,20 @@ def get_trace(file_name: str) -> list[Span]:
 
 
 class TestAdjustedTrace(unittest.TestCase):
+    def test_adjust_driver(self):
+        file = 'kafka.json'
+        trace = get_trace(file)
+        nodes = adjust_trace(trace)
+        write_json(nodes.json(), 'kafka_adjusted.json')
+
+    def test_error_trace(self):
+        id = '5e306b850f8297ff'
+        trace = query.query_trace(id)
+        adjusted = adjust_trace(trace)
+        span = adjusted.spans
+        if len(span) > 0:
+            self.assertEqual("critical", span[0].errorType)
+        write_json(adjusted.json(), 'error.json')
 
     def test_trace_clock_skew(self):
         file = '8.json'
@@ -49,12 +71,20 @@ class TestAdjustedTrace(unittest.TestCase):
         # print(node.to_string())
 
     def test_adjusted_trace(self):
-        file = '8.json'
-        id = "4e863982c330afe0"
-        spans = get_trace(file)
-        node = clock_skew.tree_corrected_for_clock_skew(spans)
-        adjusted_trace = trace.detailed_trace_summary(node)
+        # file = '8.json'
+        id = "1669d79d6c30e1ac"
+        trace = query.query_trace(id)
+        node = clock_skew.tree_corrected_for_clock_skew(trace)
+        adjusted_trace = trace_lib.detailed_trace_summary(node)
+
         self.assertEqual(adjusted_trace.traceId, id)
+        self.assertEqual(len(adjusted_trace.spans), 4)
+
+        path = Path(__file__).parent / "json/hasil.json"
+        # spans_dict = [span.dict() for span in adjusted_trace.spans]
+        # spans_json = json.dumps(spans_dict, indent=4)
+        with open(path, "w") as outfile:
+            outfile.write(adjusted_trace.json())
 
 
 class TestSpanCleaner(unittest.TestCase):

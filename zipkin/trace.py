@@ -53,37 +53,37 @@ def make_durationStr(duration):
     return f'{duration/1000000: .3f}s'
 
 
-# def add_layout_details(span_row: AdjustedSpan, trace_timestamp,
-#                        trace_duration, depth, child_ids):
-#     span_row.childIds = child_ids
-#     span_row.depth = depth+1
-#     # span_row.depthClass = (depth-1) % 6
+def add_layout_details(span_row: AdjustedSpan, trace_timestamp,
+                       trace_duration, depth, child_ids):
 
-#     if span_row.duration:
-#         width = (span_row.duration/trace_duration *
-#                  100) if trace_duration else 0
-#         span_row.width = 0.1 if width < 0.1 else width
-#         span_row.durationStr = make_durationStr(span_row.duration)
-#     else:
-#         span_row.width = 0.1
-#         span_row.durationStr = ''
+    span_row.childIds = child_ids
+    span_row.depth = depth+1
+    # span_row.depthClass = (depth-1) % 6
 
-#     if trace_duration:
-#         span_row.left = (
-#             (span_row.timestamp-trace_timestamp)/trace_duration)*100
+    if span_row.duration:
+        width = (span_row.duration/trace_duration *
+                 100) if trace_duration else 0
+        span_row.width = 0.1 if width < 0.1 else width
+        span_row.durationStr = make_durationStr(span_row.duration)
+    else:
+        span_row.width = 0.1
+        span_row.durationStr = ''
 
-#         if span_row.annotations:
-#             for a in span_row.annotations:
-#                 if span_row.duration:
-#                     a.left = (
-#                         (a.timestamp-span_row.timestamp)/span_row.duration) * 100
-#                 else:
-#                     a.left = 0
-#                 a.relativeTime = make_durationStr(
-#                     a.timestamp-trace_timestamp)
-#                 a.width = 0
-#     else:
-#         span_row.left = 0
+    if trace_duration:
+        span_row.left = (
+            (span_row.timestamp-trace_timestamp)/trace_duration)*100
+
+        if span_row.annotations:
+            for a in span_row.annotations:
+                if span_row.duration:
+                    a.left = (
+                        (a.timestamp-span_row.timestamp)/span_row.duration) * 100
+                else:
+                    a.left = 0
+                a.relativeTime = make_durationStr(a.timestamp-trace_timestamp)
+                a.width = 8
+    else:
+        span_row.left = 0
 
 
 def increment_entry(d: dict, key):
@@ -114,6 +114,7 @@ def detailed_trace_summary(root: SpanNode):
     )
 
     timestamp, duration = get_trace_timestamp_and_duration(root)
+    # print(timestamp, duration)
 
     if not timestamp:
         raise ValueError(
@@ -123,7 +124,7 @@ def detailed_trace_summary(root: SpanNode):
         current = queue.popleft()
 
         spans_to_merge = [current.span]
-        children = []
+        children: list[SpanNode] = []
         for child in current.children:
             if current.span.id == child.span.id:
                 spans_to_merge.append(child.span)
@@ -134,7 +135,7 @@ def detailed_trace_summary(root: SpanNode):
 
         sorted(children, key=cmp_to_key(node_by_timestamp))
         queue = deque(children) + queue
-        # child_ids = list(map(lambda child: child.span.id, children))
+        child_ids = [child.span.id for child in children]
 
         depth = 1
         while (current.parent and current.parent.span):
@@ -148,7 +149,7 @@ def detailed_trace_summary(root: SpanNode):
         is_leaf_span = len(children) == 0
         span_row = new_span_row(spans_to_merge, is_leaf_span)
 
-        # add_layout_details(span_row, timestamp, duration, depth, child_ids)
+        add_layout_details(span_row, timestamp, duration, depth, child_ids)
 
         for service_name in span_row.serviceNames:
             increment_entry(service_name_to_count, service_name)

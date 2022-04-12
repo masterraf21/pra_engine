@@ -1,4 +1,4 @@
 dynaconf==3.1.7
-pydantic==1.9.0
+nbformat==5.0.4
 pydash==5.1.0
-requests==2.22.0
+scipy==1.8.0

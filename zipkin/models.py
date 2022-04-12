@@ -71,6 +71,8 @@ class AdjustedAnnotation(BaseModel):
     timestamp: int
     endpoint: str
     relativeTime: Optional[str]
+    left: Optional[int]
+    width: Optional[int]
 
 
 class AdjustedTag(BaseModel):

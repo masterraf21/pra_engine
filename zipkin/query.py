@@ -8,6 +8,7 @@ API = settings.zipkin_api
 
 def query_traces(param: TraceParam) -> list[list[Span]]:
     r = requests.get(url=f'{API}/traces', params=param.dict())
+    # print(r.url)
     traces = r.json()
     m = parse_obj_as(list[list[Span]], traces)
     return m
