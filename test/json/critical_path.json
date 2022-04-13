@@ -1,0 +1,21 @@
+[
+  {
+    "root": "service-main: get /main",
+    "durations": [
+      { "operation": "service-main: get /main", "duration": 14.466 },
+      { "operation": "service-hello: get /hello", "duration": 12.441 },
+      { "operation": "service-goodbye: get /goodbye", "duration": 6.136 }
+    ]
+  },
+  {
+    "root": "main: services.userservice/getuser",
+    "durations": [
+      {
+        "operation": "main: services.userservice/getuser",
+        "duration": 255.266
+      },
+      { "operation": "kv: services.keyvalueservice/get", "duration": 48.136 },
+      { "operation": "user: services.userservice/getuser", "duration": 145.311 }
+    ]
+  }
+]

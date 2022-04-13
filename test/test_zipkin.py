@@ -1,3 +1,4 @@
+import time
 from nbformat import write
 from zipkin import span_node, clock_skew, utils, query, span_cleaner as cleaner, span_row as row, trace as trace_lib
 from zipkin.helper import adjust_trace, adjust_traces
@@ -10,35 +11,13 @@ import json
 from pathlib import Path
 from config import settings
 from pydantic import parse_obj_as
+from utils.testing import *
 
 spanExample = {
     "A": 1,
     "B": 2,
     "C": 3
 }
-
-
-def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
-    return ''.join(random.choice(chars) for _ in range(size))
-
-
-def get_json(file_name: str):
-    path = Path(__file__).parent / f"json/{file_name}"
-    with open(path, 'r') as f:
-        j = json.loads(f.read())
-        return j
-
-
-def write_json(content: str, file_name: str):
-    path = Path(__file__).parent / f"json/{file_name}"
-    with open(path, "w") as outfile:
-        outfile.write(content)
-
-
-def get_trace(file_name: str) -> list[Span]:
-    j = get_json(file_name)
-    trace = parse_obj_as(list[Span], j)
-    return trace
 
 
 class TestAdjustedTrace(unittest.TestCase):
@@ -162,6 +141,19 @@ class TestModel(unittest.TestCase):
 
 
 class TestQuery(unittest.TestCase):
+    def test_traces_example(self):
+        now = round(time.time() * 1000)
+        lb = 60*(60*1000)
+        traces = query.query_traces(TraceParam(
+            lookback=lb,
+            endTs=now,
+            limit=10
+        ))
+        adjusted_traces = adjust_traces(traces)
+        self.assertEqual(len(adjusted_traces), 10)
+        adj_dict = [trace.dict() for trace in adjusted_traces]
+        write_json(json.dumps(adj_dict), "traces.json")
+
     def test_query_traces_empty(self):
         param = TraceParam()
         result = query.query_traces(param)

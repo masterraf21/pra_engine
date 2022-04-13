@@ -3,27 +3,44 @@ from .models import *
 import numpy as np
 
 
+def compare_critical_path(baseline: list[CriticalPathData], realtime: list[CriticalPathData]):
+    pass
+
+
+def merge_durations(durations: list[list[PathDuration]]) -> list[PathDuration]:
+    pass
+
+
 def extract_critical_path(traces: list[AdjustedTrace]) -> list[CriticalPathData]:
     res: list[CriticalPathData] = []
+    lookup: dict[str, dict[str, list[float]]] = {}
     for trace in traces:
         temp: dict[str, list[float]] = {}
         root_span = trace.rootSpan
         root = f"{root_span.serviceName}: {root_span.spanName}"
+        if root not in lookup:
+            lookup[root] = {}
         for span in trace.spans:
             operation = f"{span.serviceName}: {span.spanName}"
             duration = span.duration/1000
-            if operation not in temp:
-                temp[operation] = [duration]
+            if operation not in lookup[root]:
+                lookup[root][operation] = [duration]
             else:
-                temp[operation].append(duration)
-        for key in temp.keys():
-            duration_avg = np.average(temp[key])
-            data = CriticalPathData(
-                root=root,
-                operation=key,
-                duration=duration_avg
-            )
-            res.append(data)
+                lookup[root][operation].append(duration)
+    for root in lookup.keys():
+        operations_lookup = lookup[root]
+        durations: list[PathDuration] = []
+        for operation in operations_lookup.keys():
+            duration_avg = round(np.average(operations_lookup[operation]), 3)
+            durations.append(PathDuration(
+                duration=duration_avg,
+                operation=operation
+            ))
+        res.append(CriticalPathData(
+            root=root,
+            durations=durations
+        ))
+
     return res
 
 
