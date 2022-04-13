@@ -1,11 +1,10 @@
+from collections import deque
 from functools import cmp_to_key
-from pydash import order_by
 
 from .models import *
 from .span_cleaner import compare
 from .span_node import SpanNode
 from .span_row import get_service_name, new_span_row
-from .utils import *
 
 
 def add_timestamps(span: Span, timestamps: list):

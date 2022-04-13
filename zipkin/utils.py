@@ -1,6 +1,3 @@
-from collections import deque
-import json
-from .span_cleaner import compare
 
 
 def not_exist(a) -> bool:

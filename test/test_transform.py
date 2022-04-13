@@ -28,7 +28,8 @@ class TestTransform(unittest.TestCase):
         traces = query_traces(TraceParam(
             lookback=lb,
             endTs=now,
-            limit=10
+            limit=50,
+            # serviceName="kafka"
         ))
         adjusted_traces = adjust_traces(traces)
         path = extract_critical_path(adjusted_traces)

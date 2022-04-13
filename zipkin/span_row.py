@@ -1,5 +1,4 @@
 from functools import cmp_to_key
-from .utils import *
 from .trace_constants import ConstantNames
 from .models import *
 
@@ -325,15 +324,15 @@ def new_span_row(spans_to_merge: list[Span], is_leaf_span: bool) -> AdjustedSpan
         if not res.duration and shared_duration:
             res.duration = shared_duration
 
-        if not_exist(res.duration):
+        if not res.duration:
             res.duration = 0
-        if not_exist(res.spanName):
+        if not res.duration:
             res.spanName = 'unknown'
-        if not_exist(res.serviceName):
+        if not res.duration:
             res.serviceName = 'unknown'
 
         for a in res.annotations:
-            if not_exist(a.endpoint):
+            if not res.duration:
                 a.endpoint = 'unknown'
 
         res.serviceNames.sort()

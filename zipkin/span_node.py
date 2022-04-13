@@ -1,9 +1,9 @@
-import json
-from .models import *
-from .utils import *
-from .span_cleaner import *
 from collections import deque
 from typing import Callable
+
+from .models import *
+from .span_cleaner import *
+from .utils import key_exists
 
 
 class SpanNode:

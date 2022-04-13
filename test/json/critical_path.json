@@ -1,21 +1,28 @@
 [
   {
-    "root": "service-main: get /main",
+    "root": "service-main: get not_found",
     "durations": [
-      { "operation": "service-main: get /main", "duration": 14.466 },
-      { "operation": "service-hello: get /hello", "duration": 12.441 },
-      { "operation": "service-goodbye: get /goodbye", "duration": 6.136 }
+      {
+        "operation": "service-main: get not_found",
+        "duration": 3.864,
+        "counter": 2
+      }
     ]
   },
   {
-    "root": "main: services.userservice/getuser",
+    "root": "frontend: get /",
     "durations": [
-      {
-        "operation": "main: services.userservice/getuser",
-        "duration": 255.266
-      },
-      { "operation": "kv: services.keyvalueservice/get", "duration": 48.136 },
-      { "operation": "user: services.userservice/getuser", "duration": 145.311 }
+      { "operation": "frontend: get /", "duration": 13.42, "counter": 10 },
+      { "operation": "frontend: send", "duration": 18.089, "counter": 10 },
+      { "operation": "backend: poll", "duration": 0.0, "counter": 20 },
+      { "operation": "backend: mapping", "duration": 1.154, "counter": 10 },
+      { "operation": "backend: send", "duration": 108.788, "counter": 10 }
+    ]
+  },
+  {
+    "root": "frontend: get /*",
+    "durations": [
+      { "operation": "frontend: get /*", "duration": 5.977, "counter": 1 }
     ]
   }
 ]

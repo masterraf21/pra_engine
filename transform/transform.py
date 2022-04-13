@@ -1,18 +1,10 @@
 from zipkin.models import AdjustedTrace, AdjustedSpan
-from .models import *
+from critical_path.models import CriticalPath, PathDuration
 import numpy as np
 
 
-def compare_critical_path(baseline: list[CriticalPathData], realtime: list[CriticalPathData]):
-    pass
-
-
-def merge_durations(durations: list[list[PathDuration]]) -> list[PathDuration]:
-    pass
-
-
-def extract_critical_path(traces: list[AdjustedTrace]) -> list[CriticalPathData]:
-    res: list[CriticalPathData] = []
+def extract_critical_path(traces: list[AdjustedTrace]) -> list[CriticalPath]:
+    res: list[CriticalPath] = []
     lookup: dict[str, dict[str, list[float]]] = {}
     for trace in traces:
         temp: dict[str, list[float]] = {}
@@ -34,9 +26,10 @@ def extract_critical_path(traces: list[AdjustedTrace]) -> list[CriticalPathData]
             duration_avg = round(np.average(operations_lookup[operation]), 3)
             durations.append(PathDuration(
                 duration=duration_avg,
-                operation=operation
+                operation=operation,
+                counter=len(operations_lookup[operation])
             ))
-        res.append(CriticalPathData(
+        res.append(CriticalPath(
             root=root,
             durations=durations
         ))

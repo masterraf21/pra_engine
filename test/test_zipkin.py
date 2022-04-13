@@ -1,17 +1,20 @@
-import time
-from nbformat import write
-from zipkin import span_node, clock_skew, utils, query, span_cleaner as cleaner, span_row as row, trace as trace_lib
-from zipkin.helper import adjust_trace, adjust_traces
-import unittest
-import random
-import string
-from config import settings
-from zipkin.models import Span, TraceParam, Annotation as An, Endpoint, DependencyLink
 import json
+import random
+import time
+import unittest
 from pathlib import Path
+
 from config import settings
-from pydantic import parse_obj_as
 from utils.testing import *
+from zipkin import clock_skew, query
+from zipkin import span_cleaner as cleaner
+from zipkin import span_node
+from zipkin import span_row as row
+from zipkin import trace as trace_lib
+from zipkin import utils
+from zipkin.helper import adjust_trace, adjust_traces
+from zipkin.models import Annotation as An
+from zipkin.models import Endpoint, Span, TraceParam
 
 spanExample = {
     "A": 1,
