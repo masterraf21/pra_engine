@@ -1,5 +1,4 @@
 from typing import Optional
-from path import Path
 from pydantic import BaseModel
 
 
@@ -16,11 +15,14 @@ class CriticalPath(BaseModel):
 
 class Comparison(BaseModel):
     operation: str
-    baseline: float
-    realtime: float
-    suspected: bool
+    baseline: Optional[float]
+    realtime: Optional[float]
+    suspected: bool = False
 
 
-class CriticalPathResuilt(BaseModel):
+class ComparisonResult(BaseModel):
     root: str
-    comparisonResult: list[Comparison]
+    operation: str
+    baseline: Optional[float]
+    realtime: Optional[float]
+    suspected: bool = False
