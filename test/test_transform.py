@@ -1,24 +1,12 @@
-from zipkin.query import query_traces
-from zipkin.models import TraceParam
-from zipkin.helper import adjust_traces
-from transform.transform import *
-import unittest
-import time
 import json
+import time
+import unittest
+
+from transform.transform import *
 from utils.testing import *
-
-
-# def write_json(content: str, file_name: str):
-#     path = Path(__file__).parent / f"json/{file_name}"
-#     with open(path, "w") as outfile:
-#         outfile.write(content)
-
-
-# def get_json(file_name: str):
-#     path = Path(__file__).parent / f"json/{file_name}"
-#     with open(path, 'r') as f:
-#         j = json.loads(f.read())
-#         return j
+from zipkin.helper import adjust_traces
+from zipkin.models import TraceParam
+from zipkin.query import query_traces
 
 
 class TestTransform(unittest.TestCase):
