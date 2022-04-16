@@ -16,11 +16,13 @@ def ks_test_same_dist(data1: list[float], data2: list[float],
         print(f"{test} Critical Value: {critical_value}")
 
     if pvalue < alpha:
+        if debug:
+            print("p value less than alpha")
         return False
-    return statistic < critical_value
 
-    # if statistic > crit : different dist
-    # if statistic < crit: same dist
+    # if statistic > crit vale : different dist
+    # if statistic < crit value: same dist
+    return statistic < critical_value
 
 
 def count_critical_value(n1: int, n2: int, alpha: float) -> float:
