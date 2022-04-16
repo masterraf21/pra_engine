@@ -2,7 +2,13 @@ from pydantic import BaseModel
 from typing import Optional
 
 
+class Key(BaseModel):
+    duration: str = ""
+    criticalPath: str = ""
+    correlation: str = ""
+
+
 class GlobalState(BaseModel):
-    BaselineAvailable: bool = False
-    DurationsBaselineKey: Optional[str]
-    CriticalPathBaselineKey: Optional[str]
+    baselineReady: bool = False
+    baselineKey: Key = Key()
+    resultKey: Key = Key()

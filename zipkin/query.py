@@ -27,6 +27,7 @@ def query_trace_many(ids: list[str]) -> list[list[Span]]:
         "traceIds": ids_str
     })
     traces = r.json()
+    print(type(traces))
     m = parse_obj_as(list[list[Span]], traces)
     return m
 
