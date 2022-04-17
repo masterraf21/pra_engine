@@ -10,5 +10,6 @@ class Key(BaseModel):
 
 class GlobalState(BaseModel):
     baselineReady: bool = False
+    isRegression: bool = False
     baselineKey: Key = Key()
     resultKey: Key = Key()

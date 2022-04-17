@@ -2,6 +2,7 @@ import json
 import time
 from datetime import datetime
 
+
 from config import state, ALPHA
 from statistic.ks import ks_test_same_dist
 from storage import retrieve_durations, retrieve_critical_path, store_json
@@ -57,7 +58,7 @@ def retrieve_baseline_models():
     state.baselineKey.criticalPath = paths_key
 
 
-def check_regression() -> bool:
+def check_regression():
     '''Check realtime regression by comparing realtime
     durations to baseline durations'''
     if not state.baselineReady:
@@ -67,9 +68,10 @@ def check_regression() -> bool:
     realtime_durations = extract_durations(realtime_traces)
     baseline_durations = retrieve_durations(state.baselineKey.duration)
 
-    test = ks_test_same_dist(realtime_durations, baseline_durations, ALPHA)
+    same_distribution = ks_test_same_dist(
+        realtime_durations, baseline_durations, ALPHA)
 
-    return test
+    state.isRegression = not same_distribution
 
 
 def perform_analysis():
