@@ -2,7 +2,7 @@ from config import state
 from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from storage.retrieve import retrieve_critical_path, retrieve_durations
+from scheduling.jobs import perform_analysis
 
 app = FastAPI()
 
@@ -16,3 +16,8 @@ async def root():
 async def get_state():
     state_data = jsonable_encoder(state)
     return JSONResponse(content=state_data)
+
+
+@app.post("/analysis")
+async def do_analysis():
+    perform_analysis()

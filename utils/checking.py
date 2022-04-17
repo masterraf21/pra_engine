@@ -1,5 +1,3 @@
-
-
 def not_exist(a) -> bool:
     try:
         return not a
