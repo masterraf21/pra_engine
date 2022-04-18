@@ -5,13 +5,13 @@ import unittest
 from pathlib import Path
 
 from config import settings
+from utils.checking import *
 from utils.testing import *
 from zipkin import clock_skew, query
 from zipkin import span_cleaner as cleaner
 from zipkin import span_node
 from zipkin import span_row as row
 from zipkin import trace as trace_lib
-from zipkin import utils
 from zipkin.helper import adjust_trace, adjust_traces
 from zipkin.models import Annotation as An
 from zipkin.models import Endpoint, Span, TraceParam
@@ -54,19 +54,14 @@ class TestAdjustedTrace(unittest.TestCase):
 
     def test_adjusted_trace(self):
         # file = '8.json'
-        id = "1669d79d6c30e1ac"
+        id = "49e0cad3b6a96ffd"
         trace = query.query_trace(id)
-        node = clock_skew.tree_corrected_for_clock_skew(trace)
-        adjusted_trace = trace_lib.detailed_trace_summary(node)
+        adjusted_trace = adjust_trace(trace)
 
         self.assertEqual(adjusted_trace.traceId, id)
-        self.assertEqual(len(adjusted_trace.spans), 4)
+        self.assertEqual(len(adjusted_trace.spans), 3)
 
-        path = Path(__file__).parent / "json/hasil.json"
-        # spans_dict = [span.dict() for span in adjusted_trace.spans]
-        # spans_json = json.dumps(spans_dict, indent=4)
-        with open(path, "w") as outfile:
-            outfile.write(adjusted_trace.json())
+        write_json(adjusted_trace.json(), "frontend.json")
 
 
 class TestSpanCleaner(unittest.TestCase):

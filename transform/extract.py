@@ -55,5 +55,10 @@ def extract_durations(traces: list[AdjustedTrace]) -> list[float]:
     return res
 
 
-def to_cdf():
-    pass
+def extract_features_occurence(traces: list[AdjustedTrace]) -> dict[str, int]:
+    res: dict[str, int] = {}
+    for trace in traces:
+        for span in trace.spans:
+            pass
+
+    return res

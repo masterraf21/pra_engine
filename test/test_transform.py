@@ -2,7 +2,7 @@ import json
 import time
 import unittest
 
-from transform.transform import *
+from transform.extract import *
 from utils.testing import *
 from zipkin.helper import adjust_traces
 from zipkin.models import TraceParam

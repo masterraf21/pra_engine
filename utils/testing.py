@@ -1,8 +1,9 @@
+import json
+import random
 import string
 from pathlib import Path
+
 from pydantic import parse_obj_as
-import random
-import json
 from zipkin.models import Span
 
 JSON_RELATIVE_PATH = "../test/json"

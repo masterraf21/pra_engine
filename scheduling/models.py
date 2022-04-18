@@ -3,13 +3,14 @@ from typing import Optional
 
 
 class Key(BaseModel):
-    duration: str = ""
-    criticalPath: str = ""
-    correlation: str = ""
+    duration: Optional[str]
+    criticalPath: Optional[str]
+    correlation: Optional[str]
 
 
 class GlobalState(BaseModel):
     baselineReady: bool = False
     isRegression: bool = False
+    lastRegressionCheck: Optional[str]
     baselineKey: Key = Key()
     resultKey: Key = Key()

@@ -11,3 +11,8 @@ class TestJson(unittest.TestCase):
         loaded: list[float] = list(loaded)
         print(type(loaded))
         print(loaded)
+
+
+class TestRedis(unittest.TestCase):
+    def test_init(self):
+        pass
