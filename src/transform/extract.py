@@ -1,5 +1,5 @@
-from zipkin.models import AdjustedTrace, AdjustedSpan
-from critical_path.models import CriticalPath, PathDuration
+from src.zipkin.models import AdjustedTrace, AdjustedSpan
+from src.critical_path.models import CriticalPath, PathDuration
 import numpy as np
 
 

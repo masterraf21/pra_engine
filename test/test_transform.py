@@ -2,11 +2,11 @@ import json
 import time
 import unittest
 
-from transform.extract import *
-from utils.testing import *
-from zipkin.helper import adjust_traces
-from zipkin.models import TraceParam
-from zipkin.query import query_traces
+from src.transform.extract import *
+from src.utils.testing import *
+from src.zipkin.helper import adjust_traces
+from src.zipkin.models import TraceParam
+from src.zipkin.query import query_traces
 
 
 class TestTransform(unittest.TestCase):

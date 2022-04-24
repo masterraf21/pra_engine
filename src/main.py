@@ -5,7 +5,14 @@ from fastapi.responses import JSONResponse
 from scheduling.jobs import perform_analysis
 from storage.retrieve import retrieve_critical_path
 from utils.json import jsonize
+from dependencies import init_dependencies
+
 app = FastAPI()
+
+
+@app.on_event('startup')
+def init():
+    dep = init_dependencies()
 
 
 @app.get("/")

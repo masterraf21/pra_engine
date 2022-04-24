@@ -2,6 +2,8 @@ from config import settings
 
 from redis import Redis
 
+import logging
+
 REDIS_URL = settings.redis_url
 
 
@@ -16,7 +18,7 @@ def init_redis_client():
             redis_port = int(redis_url[1])
     client = Redis(
         host=redis_host,
-        port=redis_url
+        port=redis_port
     )
 
     return client

@@ -4,7 +4,7 @@ import string
 from pathlib import Path
 
 from pydantic import parse_obj_as
-from zipkin.models import Span
+from src.zipkin.models import Span
 
 JSON_RELATIVE_PATH = "../test/json"
 

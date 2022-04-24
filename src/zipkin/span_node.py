@@ -3,7 +3,7 @@ from typing import Callable
 
 from .models import *
 from .span_cleaner import *
-from utils.checking import key_exists
+from src.utils.checking import key_exists
 
 
 class SpanNode:

@@ -1,6 +1,6 @@
 import json
 
-from critical_path.models import CriticalPath
+from src.critical_path.models import CriticalPath
 from pydantic import parse_obj_as
 
 from .redis import init_redis_client

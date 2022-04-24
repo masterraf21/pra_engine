@@ -5,16 +5,16 @@ import unittest
 from pathlib import Path
 
 from config import settings
-from utils.checking import *
-from utils.testing import *
-from zipkin import clock_skew, query
-from zipkin import span_cleaner as cleaner
-from zipkin import span_node
-from zipkin import span_row as row
-from zipkin import trace as trace_lib
-from zipkin.helper import adjust_trace, adjust_traces
-from zipkin.models import Annotation as An
-from zipkin.models import Endpoint, Span, TraceParam
+from src.utils.checking import *
+from src.utils.testing import *
+from src.zipkin import clock_skew, query
+from src.zipkin import span_cleaner as cleaner
+from src.zipkin import span_node
+from src.zipkin import span_row as row
+from src.zipkin import trace as trace_lib
+from src.zipkin.helper import adjust_trace, adjust_traces
+from src.zipkin.models import Annotation as An
+from src.zipkin.models import Endpoint, Span, TraceParam
 
 spanExample = {
     "A": 1,
@@ -202,31 +202,8 @@ class TestQuery(unittest.TestCase):
 
 class TestDynaconf(unittest.TestCase):
     def test_url(self):
-        self.assertEqual(settings.zipkin_api,
-                         "http://localhost:9411/zipkin/api/v2")
-
-
-class TestSpanUtils(unittest.TestCase):
-    def test_not_exist(self):
-        x = {
-            "a": 2, "b": 4, "c": 6, "d": None
-        }
-        t1 = utils.not_exist(x["a"])
-        t2 = utils.not_exist(x["d"])
-        # t3 = utils.not_exist(x[1])
-        t3 = utils.key_exists(x, 1)
-        self.assertEqual(t1, False)
-        self.assertEqual(t2, True)
-        self.assertEqual(t3, False)
-
-    def test_exist(self):
-        x = {
-            "a": 2, "b": 4, "c": 6
-        }
-        t1 = utils.exist(x["a"])
-        t2 = utils.exist(x["d"])
-        self.assertEqual(t1, True)
-        self.assertEqual(t2, False)
+        self.assertEqual(settings.src.zipkin_api,
+                         "http://localhost:9411/src.zipkin/api/v2")
 
 
 class TestsSpanNode(unittest.TestCase):

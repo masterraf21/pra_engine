@@ -4,7 +4,7 @@ from numpy.random import randn
 from numpy.random import lognormal
 import numpy as np
 
-from statistic import ks_test_same_dist
+from src.statistic import ks_test_same_dist
 ALPHA = 0.05
 
 
