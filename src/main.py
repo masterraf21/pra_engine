@@ -2,7 +2,7 @@ from config import state
 from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from scheduling.jobs import perform_analysis
+from scheduling.jobs import perform_analysis, get_baseline_traces
 from storage.retrieve import retrieve_critical_path
 from utils.json import jsonize
 from dependencies import init_dependencies
@@ -11,7 +11,7 @@ app = FastAPI()
 
 
 @app.on_event('startup')
-def init():
+async def init():
     dep = init_dependencies()
 
 
@@ -26,9 +26,9 @@ async def get_state():
     return JSONResponse(content=state_data)
 
 
-# @app.post("/analysis")
-# async def do_analysis():
-#     perform_analysis()
+@app.post("/baseline")
+async def get_baseline():
+    get_baseline_traces()
 
 
 @app.get("/result/critical_path")

@@ -8,7 +8,7 @@ def adjust_trace(trace: list[Span]) -> AdjustedTrace:
     return detailed_trace_summary(node)
 
 
-def adjust_traces(traces: list[list[Span]]) -> list[AdjustedTrace]:
+async def adjust_traces(traces: list[list[Span]]) -> list[AdjustedTrace]:
     nodes = [tree_corrected_for_clock_skew(trace) for trace in traces]
     adjusted_traces = [detailed_trace_summary(node) for node in nodes]
     return adjusted_traces

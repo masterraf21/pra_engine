@@ -6,7 +6,7 @@ from pathlib import Path
 from pydantic import parse_obj_as
 from src.zipkin.models import Span
 
-JSON_RELATIVE_PATH = "../test/json"
+JSON_RELATIVE_PATH = "../../test/json"
 
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):

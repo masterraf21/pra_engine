@@ -1,17 +1,28 @@
 import requests
+import aiohttp
 from config import settings
 from .models import TraceParam, Span, DependencyLink
 from pydantic import parse_obj_as
+from src.utils.checking import omit_none_dict
 
 API = settings.zipkin_api
 
 
-def query_traces(param: TraceParam) -> list[list[Span]]:
+def query_traces_sync(param: TraceParam) -> list[list[Span]]:
     r = requests.get(url=f'{API}/traces', params=param.dict())
     # print(r.url)
     traces = r.json()
     m = parse_obj_as(list[list[Span]], traces)
     return m
+
+
+async def query_traces(param: TraceParam) -> list[list[Span]]:
+    async with aiohttp.ClientSession() as session:
+        filtered_param = omit_none_dict(param.dict())
+        r = await session.get(url=f'{API}/traces', params=filtered_param)
+        traces = await r.json()
+        m = parse_obj_as(list[list[Span]], traces)
+        return m
 
 
 def query_trace(id: str) -> list[Span]:

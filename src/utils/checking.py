@@ -41,3 +41,7 @@ def check_list(a) -> bool:
         return type(a) == list
     except KeyError:
         return False
+
+
+def omit_none_dict(original: dict) -> dict:
+    return {k: v for k, v in original.items() if v is not None}

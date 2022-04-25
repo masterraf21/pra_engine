@@ -3,6 +3,9 @@ import random
 import time
 import unittest
 from pathlib import Path
+from timeit import default_timer as timer
+from aioconsole import get_standard_streams
+
 
 from config import settings
 from src.utils.checking import *
@@ -138,19 +141,40 @@ class TestModel(unittest.TestCase):
         print(type(d))
 
 
-class TestQuery(unittest.TestCase):
-    def test_traces_example(self):
+class TestQuery(unittest.IsolatedAsyncioTestCase):
+    def test_traces_sync(self):
+        start = timer()
+
         now = round(time.time() * 1000)
-        lb = 60*(60*1000)
-        traces = query.query_traces(TraceParam(
+        lb = 2*60*(60*1000)
+        traces = query.query_traces_sync(TraceParam(
             lookback=lb,
             endTs=now,
-            limit=10
+            limit=100
         ))
         adjusted_traces = adjust_traces(traces)
-        self.assertEqual(len(adjusted_traces), 10)
+        self.assertGreater(len(adjusted_traces), 10)
         adj_dict = [trace.dict() for trace in adjusted_traces]
-        write_json(json.dumps(adj_dict), "traces.json")
+        end = timer()
+        print(end - start)
+        write_json(json.dumps(adj_dict), "traces_sync.json")
+
+    async def test_traces_async(self):
+        start = timer()
+        now = round(time.time() * 1000)
+        lb = 2*60*(60*1000)
+        traces = await query.query_traces(TraceParam(
+            lookback=lb,
+            endTs=now,
+            limit=100
+        ))
+        adjusted_traces = adjust_traces(traces)
+        print(len(adjusted_traces))
+        self.assertGreater(len(adjusted_traces), 10)
+        adj_dict = [trace.dict() for trace in adjusted_traces]
+        end = timer()
+        print(end - start, flush=True)
+        write_json(json.dumps(adj_dict), "traces_async.json")
 
     def test_query_traces_empty(self):
         param = TraceParam()

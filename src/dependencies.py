@@ -7,7 +7,7 @@ class Dependencies(BaseModel):
     redis: Redis
 
 
-def init_dependencies() -> Dependencies:
+async def init_dependencies() -> Dependencies:
     redis_client = init_redis_client()
 
     dep = Dependencies(

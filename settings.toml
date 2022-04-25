@@ -1,2 +1,3 @@
 zipkin_api = "http://localhost:9411/zipkin/api/v2"
-redis_url = "localhost:6379"
+redis_url = "redis://localhost:6379"
+REDIS_URL = "redis://localhost:6379"

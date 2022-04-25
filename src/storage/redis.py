@@ -1,10 +1,20 @@
 from config import settings
 
 from redis import Redis
-
-import logging
+# from redis import
+import aioredis as redis
 
 REDIS_URL = settings.redis_url
+
+
+async def init_redis_pool() -> redis.Redis:
+    redis_conn = await redis.from_url(
+        settings.redis_url,
+        encoding="utf-8",
+        decode_response=True
+    )
+
+    return redis_conn
 
 
 def init_redis_client():
