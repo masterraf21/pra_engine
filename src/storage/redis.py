@@ -1,7 +1,6 @@
 from src import config
 
 import redis.asyncio as redis
-
 settings = config.Settings()
 
 
