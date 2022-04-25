@@ -1,11 +1,12 @@
 import requests
 import aiohttp
-from config import settings
+from src.config import get_settings
 from .models import TraceParam, Span, DependencyLink
 from pydantic import parse_obj_as
 from src.utils.checking import omit_none_dict
 
-API = settings.zipkin_api
+settings = get_settings()
+API = settings.zipkin_url
 
 
 def query_traces_sync(param: TraceParam) -> list[list[Span]]:

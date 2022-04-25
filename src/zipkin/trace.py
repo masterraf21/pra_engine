@@ -1,7 +1,7 @@
 from collections import deque
 from functools import cmp_to_key
 
-from .models import *
+from .models import Span, AdjustedSpan, AdjustedTrace, RootSpan, ServiceNameAndSpanCount
 from .span_cleaner import compare
 from .span_node import SpanNode
 from .span_row import get_service_name, new_span_row
@@ -41,7 +41,7 @@ def push_entry(d: dict, key, val):
 
 
 def make_durationStr(duration):
-    if duration == 0 or duration == None:
+    if duration == 0 or duration is None:
         return ''
     if duration < 1000:
         return f'{duration:.0f}μs'

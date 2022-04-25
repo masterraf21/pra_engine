@@ -2,14 +2,12 @@ import json
 import random
 import time
 import unittest
-from pathlib import Path
 from timeit import default_timer as timer
-from aioconsole import get_standard_streams
+from pydantic import parse_obj_as
 
-
-from config import settings
+from src.config import get_settings
 from src.utils.checking import *
-from src.utils.testing import *
+from src.utils.testing import get_json, write_json
 from src.zipkin import clock_skew, query
 from src.zipkin import span_cleaner as cleaner
 from src.zipkin import span_node
@@ -24,6 +22,14 @@ spanExample = {
     "B": 2,
     "C": 3
 }
+
+settings = get_settings()
+
+
+def get_trace(file_name: str) -> list[Span]:
+    j = get_json(file_name)
+    trace = parse_obj_as(list[Span], j)
+    return trace
 
 
 class TestAdjustedTrace(unittest.TestCase):

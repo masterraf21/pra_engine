@@ -1,4 +1,4 @@
-from config import state
+from src.config import state
 from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -6,13 +6,30 @@ from scheduling.jobs import perform_analysis, get_baseline_traces
 from storage.retrieve import retrieve_critical_path
 from utils.json import jsonize
 from dependencies import init_dependencies
+from utils.logging import get_logger
+from storage.repository import StorageRepositorySync, StorageRepositoryAsync
 
-app = FastAPI()
+logger = get_logger(__name__)
+
+app = FastAPI(title="PRA Engine", version="0.5")
 
 
 @app.on_event('startup')
-async def init():
-    dep = init_dependencies()
+async def startup_event():
+    logger.info("Initiating PRA Engine...")
+    dep = await init_dependencies()
+    app.state.dep = dep
+    app.state.sync_repo = StorageRepositorySync(
+        redis=app.state.dep.redis_sync)
+    # app.state.async_repo = StorageRepositoryAsync(
+    #     redis=app.state.dep.redis_async)
+
+
+@app.on_event('shutdown')
+async def shutdown_event():
+    logger.info("Shutting Down PRA Engine...")
+    app.state.dep.redis_sync.close()
+    # await app.state.dep.redis_async.close()
 
 
 @app.get("/")

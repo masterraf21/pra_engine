@@ -2,7 +2,7 @@ import json
 import time
 from datetime import datetime
 
-from config import ALPHA, state
+from src.config import ALPHA, state
 from critical_path import compare_critical_path
 from statistic.ks import ks_test_same_dist
 from storage import retrieve_critical_path, retrieve_durations, store_json

@@ -1,5 +1,5 @@
 import logging.config
-from config import LOGGING
+from src.config import LOGGING
 
 if __name__ == "__main__":
     import uvicorn
