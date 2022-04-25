@@ -12,8 +12,7 @@ from src.zipkin import clock_skew, query
 from src.zipkin import span_cleaner as cleaner
 from src.zipkin import span_node
 from src.zipkin import span_row as row
-from src.zipkin import trace as trace_lib
-from src.zipkin.helper import adjust_trace, adjust_traces
+from src.zipkin.helper import adjust_trace, adjust_traces, retrieve_traces
 from src.zipkin.models import Annotation as An
 from src.zipkin.models import Endpoint, Span, TraceParam
 
@@ -30,6 +29,23 @@ def get_trace(file_name: str) -> list[Span]:
     j = get_json(file_name)
     trace = parse_obj_as(list[Span], j)
     return trace
+
+
+class TestRetrieveTrace(unittest.IsolatedAsyncioTestCase):
+    async def test_retrieve_traces(self):
+        start = timer()
+        now = round(time.time() * 1000)
+        lb = 1*60*(60*1000)
+        param = TraceParam(
+            lookback=lb,
+            endTs=now,
+            limit=500
+        )
+        traces = await retrieve_traces(param)
+        self.assertGreater(len(traces), 100)
+        self.assertCount
+        end = timer()
+        print(end-start)
 
 
 class TestAdjustedTrace(unittest.TestCase):
