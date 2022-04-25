@@ -9,6 +9,10 @@ ALPHA = 0.05
 
 
 class TestStatistic(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        print("HELLO BIATCH")
+        return super().setUpClass()
 
     def test_ks(self):
         seed(0x12345)

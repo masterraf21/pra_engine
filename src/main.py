@@ -3,9 +3,8 @@ from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from scheduling.jobs import perform_analysis, get_baseline_traces
-from storage.retrieve import retrieve_critical_path
+
 from storage.redis import init_redis
-from utils.json import jsonize
 from utils.logging import get_logger
 from storage.repository import StorageRepository
 
@@ -24,7 +23,7 @@ async def startup_event():
 @app.on_event('shutdown')
 async def shutdown_event():
     logger.info("Shutting Down PRA Engine...")
-    app.state.dep.redis_sync.close()
+    await app.state.redis.close()
     # await app.state.dep.redis_async.close()
 
 
@@ -44,11 +43,11 @@ async def get_baseline():
     get_baseline_traces()
 
 
-@app.get("/result/critical_path")
-async def get_critical_path_result():
-    if state.resultKey.criticalPath:
-        result = retrieve_critical_path(state.resultKey.criticalPath)
-        result_json = jsonize(result)
-        return JSONResponse(content=result_json)
-    else:
-        return {"message": "Result Not Available"}
+# @app.get("/result/critical_path")
+# async def get_critical_path_result():
+#     if state.resultKey.criticalPath:
+#         result = retrieve_critical_path(state.resultKey.criticalPath)
+#         result_json = jsonize(result)
+#         return JSONResponse(content=result_json)
+#     else:
+#         return {"message": "Result Not Available"}

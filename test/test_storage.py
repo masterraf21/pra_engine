@@ -1,46 +1,35 @@
 import unittest
-import json
-from src.storage.redis import init_redis_client
-import src.storage.retrieve as rret
-import src.storage.store as rstore
-import logging
-import redis
-import time
-import json
+from src.storage.redis import init_redis
+from src.storage.repository import StorageRepository
+
+events = []
 
 
-class TestJson(unittest.TestCase):
-    def test_list_float_json(self):
-        a = [1.2, 1.3, 1.4, 1.5, 1.6]
-        a_str = json.dumps(a)
-        print(a_str)
-        loaded = json.loads(a_str)
-        loaded: list[float] = list(loaded)
-        print(type(loaded))
-        print(loaded)
+class TestStorage(unittest.IsolatedAsyncioTestCase):
+    def setUp(self) -> None:
+        events.append("setUp")
+        return super().setUp()
 
+    def tearDown(self) -> None:
+        events.append("tearDown")
+        return super().tearDown()
 
-class TestRedis(unittest.TestCase):
-    # @classmethod
-    # def setUpClass(cls) -> None:
-    #     print("Setting Up Redis...")
-    #     cls.connection = init_redis_client()
-    #     return super().setUpClass()
+    async def asyncSetUp(self) -> None:
+        print("Setup Class")
+        self.redis = await init_redis()
+        self.repo = StorageRepository(self.redis)
+        return await super().asyncSetUp()
 
-    # @classmethod
-    # def tearDownClass(cls) -> None:
-    #     print("Closing Redis...")
-    #     cls.connection.close()
-    #     return super().tearDownClass()
+    async def asyncTearDown(self) -> None:
+        await self.redis.close()
+        return await super().asyncTearDown()
 
-    def test_init(self):
-        conn = init_redis_client()
-        check = conn.ping()
-        self.assertTrue(check)
+    async def test_init_redis(self):
+        self.assertTrue(await self.redis.ping())
 
-    def test_store(self):
-        data = {"a": 1, "b": 2}
-        data_json = json.dumps(data)
-        key = str(time.time())
-        rstore.store_json("test1", data_json)
-        # check =
+    async def test_store_json(self):
+        key = "test_key"
+        val = {"A": 1}
+        await self.repo.store_json(key, val)
+        val_get = await self.redis.json().get(key)
+        self.assertEqual(val, val_get)
