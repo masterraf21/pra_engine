@@ -1,7 +1,7 @@
-from src import config
+from src.config import get_settings
 
 import redis.asyncio as redis
-settings = config.Settings()
+settings = get_settings()
 
 
 async def init_redis() -> redis.Redis:

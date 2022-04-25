@@ -3,4 +3,4 @@ services:
     container_name: redis_test
     image: redislabs/redismod:latest
     ports:
-      - 6379:6379
+      - 6380:6379

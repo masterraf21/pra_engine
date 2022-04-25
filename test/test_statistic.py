@@ -1,7 +1,5 @@
 import unittest
 from numpy.random import seed
-from numpy.random import randn
-from numpy.random import lognormal
 import numpy as np
 
 from src.statistic import ks_test_same_dist
