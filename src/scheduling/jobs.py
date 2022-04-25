@@ -6,7 +6,6 @@ from critical_path import compare_critical_path
 from src.config import ALPHA, state
 from src.storage.repository import StorageRepository
 from statistic.ks import ks_test_same_dist
-from storage import retrieve_critical_path, retrieve_durations, store_json
 from transform import extract_critical_path, extract_durations
 from zipkin.helper import adjust_traces
 from zipkin.models import AdjustedTrace, TraceParam
@@ -67,7 +66,7 @@ class EngineJobs:
 
         realtime_traces = self.get_realtime_traces()
         realtime_durations = extract_durations(realtime_traces)
-        baseline_durations = retrieve_durations(state.baselineKey.duration)
+        baseline_durations = await self._storage_repo.retrieve_durations(state.baselineKey.duration)
 
         same_distribution = ks_test_same_dist(
             realtime_durations, baseline_durations, ALPHA)
@@ -84,7 +83,7 @@ class EngineJobs:
 
         realtime_traces = self.get_realtime_traces()
         realtime_paths = extract_critical_path(realtime_traces)
-        baseline_paths = retrieve_critical_path(state.baselineKey.criticalPath)
+        baseline_paths = await self._storage_repo.retrieve_critical_path(state.baselineKey.criticalPath)
 
         result_paths = compare_critical_path(baseline_paths, realtime_paths)
         result_paths_json = [p.json() for p in result_paths]
