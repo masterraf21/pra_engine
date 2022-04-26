@@ -39,11 +39,11 @@ class TestRetrieveTrace(unittest.IsolatedAsyncioTestCase):
         param = TraceParam(
             lookback=lb,
             endTs=now,
-            limit=500
+            limit=2000
         )
         traces = await retrieve_traces(param)
+        print(len(traces))
         self.assertGreater(len(traces), 100)
-        self.assertCount
         end = timer()
         print(end-start)
 

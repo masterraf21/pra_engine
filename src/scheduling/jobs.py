@@ -1,46 +1,47 @@
 import json
 import time
 from datetime import datetime
+import logging
 
-from critical_path import compare_critical_path
+from src.critical_path import compare_critical_path
 from src.config import ALPHA, state
 from src.storage.repository import StorageRepository
-from statistic.ks import ks_test_same_dist
-from transform import extract_critical_path, extract_durations
-from zipkin.helper import adjust_traces
-from zipkin.models import AdjustedTrace, TraceParam
-from zipkin.query import query_traces
+from src.statistic.ks import ks_test_same_dist
+from src.transform import extract_critical_path, extract_durations
+from src.zipkin.helper import retrieve_traces
+from src.zipkin.models import AdjustedTrace, TraceParam
 
 from .constants import TRACE_LIMIT, BASELINE_PROBE_TIME, REALTIME_CHECK_PERIOD
 
 
 class EngineJobs:
-    def __init__(self, redis_repo: StorageRepository) -> None:
+    def __init__(self, redis_repo: StorageRepository, logger: logging.Logger) -> None:
         self._storage_repo = redis_repo
+        self._logger = logger
 
-    def get_baseline_traces(self) -> list[AdjustedTrace]:
-        raw_traces = query_traces(TraceParam(
+    async def get_baseline_traces(self) -> list[AdjustedTrace]:
+        param = TraceParam(
             endTs=round(time.time() * 1000),
             limit=TRACE_LIMIT,
             lookback=BASELINE_PROBE_TIME*1000
-        ))
-        traces = adjust_traces(raw_traces)
+        )
+        traces = await retrieve_traces(param)
         return traces
 
-    def get_realtime_traces(self) -> list[AdjustedTrace]:
-        raw_traces = query_traces(TraceParam(
+    async def get_realtime_traces(self) -> list[AdjustedTrace]:
+        param = TraceParam(
             endTs=round(time.time() * 1000),
             limit=TRACE_LIMIT,
             lookback=REALTIME_CHECK_PERIOD*1000
-        ))
-        traces = adjust_traces(raw_traces)
+        )
+        traces = await retrieve_traces(param)
         return traces
 
     async def retrieve_baseline_models(self):
         '''Query baseline traces from zipkin, transform into models
         , store in redis, change global state'''
 
-        traces = self.get_baseline_traces()
+        traces = await self.get_baseline_traces()
 
         durations = extract_durations(traces)
         paths = extract_critical_path(traces)
@@ -62,9 +63,10 @@ class EngineJobs:
         '''Check realtime regression by comparing realtime
         durations to baseline durations'''
         if not state.baselineReady:
+            self._logger.info("Baseline Not Ready")
             return False
 
-        realtime_traces = self.get_realtime_traces()
+        realtime_traces = await self.get_realtime_traces()
         realtime_durations = extract_durations(realtime_traces)
         baseline_durations = await self._storage_repo.retrieve_durations(state.baselineKey.duration)
 
@@ -79,9 +81,10 @@ class EngineJobs:
         '''Perform Critical Path analysis + Correlation Analysis
         and store in redis'''
         if not state.baselineReady:
+            self._logger.info("Baseline Not Ready")
             return
 
-        realtime_traces = self.get_realtime_traces()
+        realtime_traces = await self.get_realtime_traces()
         realtime_paths = extract_critical_path(realtime_traces)
         baseline_paths = await self._storage_repo.retrieve_critical_path(state.baselineKey.criticalPath)
 
@@ -96,12 +99,13 @@ class EngineJobs:
                                             json.dumps(result_paths_json))
         state.resultKey.criticalPath = result_paths_key
 
-    async def regression_analysis(self, debug: bool = False):
-        if debug:
-            print("Doing Regression Analysis")
+    async def regression_analysis(self):
+        self._logger.info("Doing Regression Analysis")
         if self.check_regression():
+            self._logger.info("Regression Detected")
             await self.perform_analysis()
+        else:
+            self._logger.info("No Regression Detected")
 
-
-def regression_analysis_fake():
-    print("Doing Regression Analysis")
+    def regression_analysis_fake(self):
+        self._logger.info("Doing Regression Analysis")

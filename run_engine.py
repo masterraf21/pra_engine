@@ -1,8 +1,7 @@
-import logging.config
-from src.config import LOGGING
+import uvicorn
+from src.config import get_settings
 
 if __name__ == "__main__":
-    import uvicorn
-    from src.main import app
-    logging.config.dictConfig(LOGGING)
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    settings = get_settings()
+    reload = settings.environment == "dev"
+    uvicorn.run("src.main:app", host="0.0.0.0", port=8080, reload=reload)
