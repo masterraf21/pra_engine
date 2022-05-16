@@ -7,6 +7,7 @@ from .constants import C_ALPHA
 
 def ks_test_same_dist(data1: list[float], data2: list[float],
                       alpha: float, debug: bool = False) -> bool:
+
     test = ks_2samp(data1, data2)
 
     critical_value = count_critical_value(len(data1), len(data2), alpha)

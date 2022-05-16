@@ -1,12 +1,11 @@
 
 from fastapi import FastAPI, HTTPException
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse
 
 from src.scheduling.jobs import EngineJobs
 from src.scheduling.scheduler import Scheduler
 from src.scheduling.models import BaselineParam
-from src.config import state
 from src.storage.redis import init_redis
 from src.storage.repository import StorageRepository
 from src.utils.logging import get_logger
@@ -39,8 +38,27 @@ async def root():
 
 @app.get("/state")
 async def get_state():
-    state_data = jsonable_encoder(state)
-    return JSONResponse(content=state_data)
+    state = await app.state.storage_repo.retrieve_state()
+    return JSONResponse(content=jsonable_encoder(state))
+
+
+@app.get("/regression/range")
+async def check_regression_range(end_datetime: str, start_datetime: str, limit: int = 5000):
+    pass
+
+
+@app.get("/regression/fixed")
+async def check_regression_realtime(limit: int = 5000):
+    regression = await app.state.jobs.check_regression_realtime()
+    output_str = ""
+    if regression:
+        output_str = "Regression detected"
+    else:
+        output_str = "Regression not detected"
+
+    return JSONResponse(content={
+        "message": output_str
+    })
 
 
 @app.post("/baseline")
@@ -48,5 +66,16 @@ async def retrieve_baseline(param: BaselineParam):
     try:
         logger.info(param)
         await app.state.jobs.retrieve_baseline_models(param)
+        return JSONResponse(content={
+            "message": "Baseline retrieved"
+        })
     except ValueError:
         return HTTPException(status_code=400)
+
+
+@app.delete("/baseline")
+async def remove_baseline():
+    await app.state.jobs.remove_baseline_model()
+    return JSONResponse(content={
+        "message": "Baseline removed"
+    })

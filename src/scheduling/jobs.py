@@ -3,7 +3,7 @@ import logging
 import time
 from datetime import datetime
 
-from src.config import ALPHA, state
+from src.config import ALPHA
 from src.critical_path import compare_critical_path
 from src.statistic.ks import ks_test_same_dist
 from src.storage.repository import StorageRepository
@@ -22,21 +22,17 @@ class EngineJobs:
         self._logger = logger
 
     async def get_baseline_traces(self, param: BaselineParam) -> list[AdjustedTrace]:
-        try:
-            time_param = diff_two_datetime_str(
-                start_str=param.startDatetime,
-                end_str=param.endDatetime
-            )
-            print(time_param)
-            param = TraceParam(
-                endTs=time_param[0],
-                limit=param.limit,
-                lookback=time_param[1]
-            )
-            traces = await retrieve_traces(param)
-            return traces
-        except ValueError as e:
-            self._logger.exception(e)
+        time_param = diff_two_datetime_str(
+            start_str=param.startDatetime,
+            end_str=param.endDatetime
+        )
+        param = TraceParam(
+            endTs=time_param.endTs,
+            limit=param.limit,
+            lookback=time_param.lookback
+        )
+        traces = await retrieve_traces(param)
+        return traces
 
     async def get_realtime_traces(self) -> list[AdjustedTrace]:
         param = TraceParam(
@@ -47,17 +43,19 @@ class EngineJobs:
         traces = await retrieve_traces(param)
         return traces
 
-    def delete_baseline_model(self):
+    async def remove_baseline_model(self):
+        state = await self._storage_repo.retrieve_state()
         state.baselineReady = False
         state.baselineKey.duration = ""
         state.baselineKey.criticalPath = ""
+        await self._storage_repo.update_state(state)
 
     async def retrieve_baseline_models(self, param: BaselineParam):
         '''Query baseline traces from zipkin, transform into models
         , store in redis, change global state'''
 
         traces = await self.get_baseline_traces(param)
-
+        print(len(traces))
         durations = extract_durations(traces)
         paths = extract_critical_path(traces)
         paths_json = [p.dict() for p in paths]
@@ -70,31 +68,39 @@ class EngineJobs:
         await self._storage_repo.store_json(durations_key, json.dumps(durations))
         await self._storage_repo.store_json(paths_key, json.dumps(paths_json))
 
+        state = await self._storage_repo.retrieve_state()
         state.baselineReady = True
         state.baselineKey.duration = durations_key
         state.baselineKey.criticalPath = paths_key
+        await self._storage_repo.update_state(state)
 
-    async def check_regression(self) -> bool:
+    async def check_regression_realtime(self) -> bool:
         '''Check realtime regression by comparing realtime
         durations to baseline durations'''
+        state = await self._storage_repo.retrieve_state()
         if not state.baselineReady:
             self._logger.info("Baseline Not Ready")
             return False
 
         realtime_traces = await self.get_realtime_traces()
         realtime_durations = extract_durations(realtime_traces)
+        if not realtime_durations:
+            return False
+
         baseline_durations = await self._storage_repo.retrieve_durations(state.baselineKey.duration)
 
-        same_distribution = ks_test_same_dist(
-            realtime_durations, baseline_durations, ALPHA)
+        same_distribution = ks_test_same_dist(realtime_durations, baseline_durations, ALPHA)
 
         state.lastRegressionCheck = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
         state.isRegression = not same_distribution
+        await self._storage_repo.update_state(state)
+
         return not same_distribution
 
     async def perform_analysis(self):
         '''Perform Critical Path analysis + Correlation Analysis
         and store in redis'''
+        state = await self._storage_repo.retrieve_state()
         if not state.baselineReady:
             self._logger.info("Baseline Not Ready")
             return
@@ -113,10 +119,12 @@ class EngineJobs:
         await self._storage_repo.store_json(result_paths_key,
                                             json.dumps(result_paths_json))
         state.resultKey.criticalPath = result_paths_key
+        await self._storage_repo.update_state(state)
 
     async def regression_analysis(self):
         self._logger.info("Doing Regression Analysis")
-        if self.check_regression():
+        regression = await self.check_regression_realtime()
+        if regression:
             self._logger.info("Regression Detected")
             await self.perform_analysis()
         else:

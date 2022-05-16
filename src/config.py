@@ -4,12 +4,7 @@ from functools import lru_cache
 
 from pydantic import AnyUrl, BaseSettings
 
-from src.scheduling.models import GlobalState
-# from src.utils.logging import get_logger
 
-# logger = get_logger(__name__)
-
-state = GlobalState()
 ALPHA = 0.05
 
 

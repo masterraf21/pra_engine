@@ -19,7 +19,7 @@ class TestLive(unittest.IsolatedAsyncioTestCase):
             end=datetime(2022, 5, 16, 9, 0, 0),
             start=datetime(2022, 5, 16, 8, 0, 0)
         )
-        
+
         traces = await retrieve_traces(TraceParam(
             endTs=param.endTs,
             lookback=param.lookback,
