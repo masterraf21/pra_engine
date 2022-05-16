@@ -16,7 +16,7 @@ class GlobalState(BaseModel):
     resultKey: Key = Key()
 
 
-class BaselineParam(BaseModel):
+class TraceRangeParam(BaseModel):
     endDatetime: str
     startDatetime: str
     limit: int = 5000

@@ -5,11 +5,13 @@ from fastapi.responses import JSONResponse
 
 from src.scheduling.jobs import EngineJobs
 from src.scheduling.scheduler import Scheduler
-from src.scheduling.models import BaselineParam
+from src.scheduling.models import TraceRangeParam
 from src.storage.redis import init_redis
 from src.storage.repository import StorageRepository
 from src.utils.logging import get_logger
+from src.config import get_settings
 
+settings = get_settings()
 logger = get_logger(__name__)
 app = FastAPI(title="PRA Engine", version="0.5")
 
@@ -17,11 +19,13 @@ app = FastAPI(title="PRA Engine", version="0.5")
 @app.on_event('startup')
 async def startup_event():
     logger.info("Initiating PRA Engine...")
+    if settings.debug:
+        logger.debug("Running in debug mode")
+
     app.state.redis = await init_redis()
     app.state.storage_repo = StorageRepository(app.state.redis)
-    app.state.jobs = EngineJobs(app.state.storage_repo, logger)
-
-    scheduler = Scheduler(app.state.jobs, logger)
+    app.state.jobs = EngineJobs(app.state.storage_repo)
+    scheduler = Scheduler(app.state.jobs)
     scheduler.start()
 
 
@@ -44,7 +48,23 @@ async def get_state():
 
 @app.get("/regression/range")
 async def check_regression_range(end_datetime: str, start_datetime: str, limit: int = 5000):
-    pass
+    try:
+        param = TraceRangeParam(
+            endDatetime=end_datetime,
+            startDatetime=start_datetime,
+            limit=limit
+        )
+        regression = await app.state.jobs.check_regression_range(param)
+        if regression:
+            output_str = "Regression detected"
+        else:
+            output_str = "Regression not detected"
+
+        return JSONResponse(content={
+            "message": output_str
+        })
+    except ValueError as e:
+        print(e)
 
 
 @app.get("/regression/fixed")
@@ -62,7 +82,7 @@ async def check_regression_realtime(limit: int = 5000):
 
 
 @app.post("/baseline")
-async def retrieve_baseline(param: BaselineParam):
+async def retrieve_baseline(param: TraceRangeParam):
     try:
         logger.info(param)
         await app.state.jobs.retrieve_baseline_models(param)

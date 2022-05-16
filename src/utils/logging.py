@@ -3,8 +3,10 @@ from functools import lru_cache
 
 from rich.console import Console
 from rich.logging import RichHandler
+from rich.style import Style
 
-console = Console(color_system="256", width=150, style="blue")
+base_style = Style(color="magenta")
+console = Console(color_system="256", width=150, style=base_style)
 
 
 @lru_cache

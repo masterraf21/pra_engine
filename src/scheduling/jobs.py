@@ -1,27 +1,30 @@
+import asyncio
 import json
-import logging
 import time
 from datetime import datetime
 
-from src.config import ALPHA
+from src.config import ALPHA, get_settings
 from src.critical_path import compare_critical_path
 from src.statistic.ks import ks_test_same_dist
 from src.storage.repository import StorageRepository
 from src.transform import extract_critical_path, extract_durations
 from src.utils import diff_two_datetime_str
+from src.utils.logging import get_logger
 from src.zipkin.helper import retrieve_traces
 from src.zipkin.models import AdjustedTrace, TraceParam
 
 from .constants import REALTIME_CHECK_PERIOD, TRACE_LIMIT
-from .models import BaselineParam
+from .models import TraceRangeParam
+
+settings = get_settings()
+logger = get_logger(__name__)
 
 
 class EngineJobs:
-    def __init__(self, redis_repo: StorageRepository, logger: logging.Logger) -> None:
+    def __init__(self, redis_repo: StorageRepository) -> None:
         self._storage_repo = redis_repo
-        self._logger = logger
 
-    async def get_baseline_traces(self, param: BaselineParam) -> list[AdjustedTrace]:
+    async def get_ranged_traces(self, param: TraceRangeParam) -> list[AdjustedTrace]:
         time_param = diff_two_datetime_str(
             start_str=param.startDatetime,
             end_str=param.endDatetime
@@ -50,11 +53,11 @@ class EngineJobs:
         state.baselineKey.criticalPath = ""
         await self._storage_repo.update_state(state)
 
-    async def retrieve_baseline_models(self, param: BaselineParam):
+    async def retrieve_baseline_models(self, param: TraceRangeParam):
         '''Query baseline traces from zipkin, transform into models
         , store in redis, change global state'''
 
-        traces = await self.get_baseline_traces(param)
+        traces = await self.get_ranged_traces(param)
         print(len(traces))
         durations = extract_durations(traces)
         paths = extract_critical_path(traces)
@@ -74,35 +77,78 @@ class EngineJobs:
         state.baselineKey.criticalPath = paths_key
         await self._storage_repo.update_state(state)
 
+    async def check_regression_range(self, param: TraceRangeParam) -> bool:
+        '''Check realtime regression by comparing ranged
+        durations to baseline durations'''
+        # Null Hypothesis
+        regression = False
+
+        state = await self._storage_repo.retrieve_state()
+        state.lastRegressionCheck = datetime.now().strftime("%d/%m/%y %H:%M:%S")
+
+        if not state.baselineReady:
+            logger.info("Baseline Not Ready")
+            await self._storage_repo.update_state(state)
+
+            return False
+
+        ranged_traces = await self.get_ranged_traces(param)
+        realtime_durations = extract_durations(ranged_traces)
+        if not realtime_durations:
+            state.isRegression = regression
+            await self._storage_repo.update_state(state)
+
+            return False
+
+        baseline_durations = await self._storage_repo.retrieve_durations(state.baselineKey.duration)
+        # Reject null hypothesis if different distribution
+        regression = not ks_test_same_dist(realtime_durations, baseline_durations, ALPHA, settings.debug)
+
+        state.isRegression = regression
+        await self._storage_repo.update_state(state)
+
+        return regression
+
     async def check_regression_realtime(self) -> bool:
         '''Check realtime regression by comparing realtime
         durations to baseline durations'''
+        # Null Hypothesis
+        regression = False
+
         state = await self._storage_repo.retrieve_state()
+        state.lastRegressionCheck = datetime.now().strftime("%d/%m/%y %H:%M:%S")
+
         if not state.baselineReady:
-            self._logger.info("Baseline Not Ready")
+            logger.info("Baseline Not Ready")
+            await self._storage_repo.update_state(state)
+
             return False
 
         realtime_traces = await self.get_realtime_traces()
         realtime_durations = extract_durations(realtime_traces)
         if not realtime_durations:
+            state.isRegression = regression
+            await self._storage_repo.update_state(state)
+            if settings.debug:
+                logger.debug("Realtime Durations empty, returning False")
+
             return False
 
         baseline_durations = await self._storage_repo.retrieve_durations(state.baselineKey.duration)
+        # Reject null hypothesis if different distribution
+        regression = not ks_test_same_dist(realtime_durations, baseline_durations, ALPHA, settings.debug)
 
-        same_distribution = ks_test_same_dist(realtime_durations, baseline_durations, ALPHA)
-
-        state.lastRegressionCheck = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-        state.isRegression = not same_distribution
+        state.isRegression = regression
         await self._storage_repo.update_state(state)
 
-        return not same_distribution
+        return regression
 
     async def perform_analysis(self):
         '''Perform Critical Path analysis + Correlation Analysis
         and store in redis'''
         state = await self._storage_repo.retrieve_state()
         if not state.baselineReady:
-            self._logger.info("Baseline Not Ready")
+            logger.info("Baseline Not Ready")
             return
 
         realtime_traces = await self.get_realtime_traces()
@@ -122,13 +168,16 @@ class EngineJobs:
         await self._storage_repo.update_state(state)
 
     async def regression_analysis(self):
-        self._logger.info("Doing Regression Analysis")
+        logger.info("Doing Regression Analysis")
         regression = await self.check_regression_realtime()
         if regression:
-            self._logger.info("Regression Detected")
+            logger.info("Regression Detected")
             await self.perform_analysis()
         else:
-            self._logger.info("No Regression Detected")
+            logger.info("No Regression Detected")
 
-    def regression_analysis_fake(self):
-        self._logger.info("Doing Regression Analysis")
+    async def regression_analysis_fake(self):
+        logger.info("Sleeping for")
+        # logger.info("Doing Regression Analysis")
+        await asyncio.sleep(1)
+        logger.info("1 second")
