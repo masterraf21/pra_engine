@@ -2,8 +2,8 @@ import json
 import time
 import unittest
 
-from src.transform.extract import *
-from src.utils.testing import *
+from src.transform.extract import extract_critical_path, extract_durations
+from src.utils.testing import write_json
 from src.zipkin.helper import adjust_traces
 from src.zipkin.models import TraceParam
 from src.zipkin.query import query_traces

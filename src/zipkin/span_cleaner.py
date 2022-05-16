@@ -1,5 +1,5 @@
 from functools import cmp_to_key
-from .models import *
+from .models import Span, Endpoint
 from pydash import union_with, is_equal, sort_by
 
 
@@ -144,7 +144,7 @@ def merge_v2_by_id(spans: list[Span]) -> list[Span]:
         cleaned = clean(span)
         if (not traceId or len(traceId) != 32):
             traceId = cleaned.traceId
-            result.append(cleaned)
+        result.append(cleaned)
 
     if length <= 1:
         return result
