@@ -14,3 +14,9 @@ class GlobalState(BaseModel):
     lastRegressionCheck: Optional[str]
     baselineKey: Key = Key()
     resultKey: Key = Key()
+
+
+class BaselineParam(BaseModel):
+    endDatetime: str
+    startDatetime: str
+    limit: int = 5000

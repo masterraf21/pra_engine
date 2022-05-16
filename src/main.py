@@ -1,10 +1,11 @@
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 
 from src.scheduling.jobs import EngineJobs
 from src.scheduling.scheduler import Scheduler
+from src.scheduling.models import BaselineParam
 from src.config import state
 from src.storage.redis import init_redis
 from src.storage.repository import StorageRepository
@@ -43,5 +44,9 @@ async def get_state():
 
 
 @app.post("/baseline")
-async def get_baseline():
-    await app.state.jobs.retrieve_baseline_models()
+async def retrieve_baseline(param: BaselineParam):
+    try:
+        logger.info(param)
+        await app.state.jobs.retrieve_baseline_models(param)
+    except ValueError:
+        return HTTPException(status_code=400)

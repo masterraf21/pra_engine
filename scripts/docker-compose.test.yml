@@ -3,7 +3,7 @@ services:
     container_name: redis_test
     image: redislabs/redismod:latest
     ports:
-      - 6380:6379
+      - 6379:6379
   zipkin:
     container_name: zipkin_test
     image: ghcr.io/openzipkin/zipkin-slim

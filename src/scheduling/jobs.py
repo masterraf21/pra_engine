@@ -1,17 +1,19 @@
 import json
+import logging
 import time
 from datetime import datetime
-import logging
 
-from src.critical_path import compare_critical_path
 from src.config import ALPHA, state
-from src.storage.repository import StorageRepository
+from src.critical_path import compare_critical_path
 from src.statistic.ks import ks_test_same_dist
+from src.storage.repository import StorageRepository
 from src.transform import extract_critical_path, extract_durations
+from src.utils import diff_two_datetime_str
 from src.zipkin.helper import retrieve_traces
 from src.zipkin.models import AdjustedTrace, TraceParam
 
-from .constants import TRACE_LIMIT, BASELINE_PROBE_TIME, REALTIME_CHECK_PERIOD
+from .constants import REALTIME_CHECK_PERIOD, TRACE_LIMIT
+from .models import BaselineParam
 
 
 class EngineJobs:
@@ -19,14 +21,22 @@ class EngineJobs:
         self._storage_repo = redis_repo
         self._logger = logger
 
-    async def get_baseline_traces(self) -> list[AdjustedTrace]:
-        param = TraceParam(
-            endTs=round(time.time() * 1000),
-            limit=TRACE_LIMIT,
-            lookback=BASELINE_PROBE_TIME*1000
-        )
-        traces = await retrieve_traces(param)
-        return traces
+    async def get_baseline_traces(self, param: BaselineParam) -> list[AdjustedTrace]:
+        try:
+            time_param = diff_two_datetime_str(
+                start_str=param.startDatetime,
+                end_str=param.endDatetime
+            )
+            print(time_param)
+            param = TraceParam(
+                endTs=time_param[0],
+                limit=param.limit,
+                lookback=time_param[1]
+            )
+            traces = await retrieve_traces(param)
+            return traces
+        except ValueError as e:
+            self._logger.exception(e)
 
     async def get_realtime_traces(self) -> list[AdjustedTrace]:
         param = TraceParam(
@@ -37,11 +47,16 @@ class EngineJobs:
         traces = await retrieve_traces(param)
         return traces
 
-    async def retrieve_baseline_models(self):
+    def delete_baseline_model(self):
+        state.baselineReady = False
+        state.baselineKey.duration = ""
+        state.baselineKey.criticalPath = ""
+
+    async def retrieve_baseline_models(self, param: BaselineParam):
         '''Query baseline traces from zipkin, transform into models
         , store in redis, change global state'''
 
-        traces = await self.get_baseline_traces()
+        traces = await self.get_baseline_traces(param)
 
         durations = extract_durations(traces)
         paths = extract_critical_path(traces)
