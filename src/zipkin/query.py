@@ -13,6 +13,7 @@ async def query_traces(param: TraceParam) -> list[list[Span]]:
     async with aiohttp.ClientSession() as session:
         filtered_param = omit_none_dict(param.dict())
         r = await session.get(url=f'{API}/traces', params=filtered_param)
+        print(r.url)
         traces = await r.json()
         m = parse_obj_as(list[list[Span]], traces)
         return m
