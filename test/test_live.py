@@ -17,9 +17,9 @@ class TestLive(unittest.IsolatedAsyncioTestCase):
         traces = await retrieve_traces(TraceParam(
             endTs=now,
             lookback=lb,
-            limit=20
+            limit=1000
         ))
-        # print(len(traces))
+        print(len(traces))
         # print(traces)
 
         durations = extract_durations(traces)
@@ -27,7 +27,7 @@ class TestLive(unittest.IsolatedAsyncioTestCase):
         # t_json = [t.dict() for t in traces]
         # write_json(json.dumps(t_json), "test_live.json")
 
-        write_json(json.dumps(durations), "durations_baseline_1405_939pm")
+        write_json(json.dumps(durations), "durations_baseline_1405_939pm.json")
 
     async def test_debug(self):
         now = round(time.time() * 1000)
