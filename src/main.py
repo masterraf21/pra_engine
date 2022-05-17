@@ -13,7 +13,9 @@ from src.config import get_settings
 
 settings = get_settings()
 logger = get_logger(__name__)
+
 app = FastAPI(title="PRA Engine", version="0.5")
+app.logger = logger
 
 
 @app.on_event('startup')
@@ -26,7 +28,7 @@ async def startup_event():
     app.state.storage_repo = StorageRepository(app.state.redis)
     app.state.jobs = EngineJobs(app.state.storage_repo)
     scheduler = Scheduler(app.state.jobs)
-    scheduler.start()
+    # scheduler.start()
 
 
 @app.on_event('shutdown')

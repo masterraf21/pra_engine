@@ -93,6 +93,9 @@ class EngineJobs:
             return False
 
         ranged_traces = await self.get_ranged_traces(param)
+        if settings.debug:
+            logger.debug(f"Num of traces: {len(ranged_traces)}, limit: {param.limit}")
+
         realtime_durations = extract_durations(ranged_traces)
         if not realtime_durations:
             state.isRegression = regression
@@ -103,6 +106,11 @@ class EngineJobs:
         baseline_durations = await self._storage_repo.retrieve_durations(state.baselineKey.duration)
         # Reject null hypothesis if different distribution
         regression = not ks_test_same_dist(realtime_durations, baseline_durations, ALPHA, settings.debug)
+        if settings.debug:
+            if regression:
+                logger.debug("Regression Detected")
+            else:
+                logger.debug("Regression not Detected")
 
         state.isRegression = regression
         await self._storage_repo.update_state(state)
