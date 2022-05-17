@@ -1,4 +1,3 @@
-from asyncore import write
 import json
 import unittest
 
@@ -7,7 +6,7 @@ from src.scheduling.models import TraceRangeParam
 from src.transform import extract_critical_path, extract_durations
 from src.utils import diff_two_datetime_str, write_json
 from src.zipkin.helper import retrieve_traces
-from src.zipkin.models import AdjustedTag, AdjustedTrace, TraceParam
+from src.zipkin.models import AdjustedTrace, TraceParam
 
 
 class TestBaseline(unittest.IsolatedAsyncioTestCase):
