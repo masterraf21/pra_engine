@@ -4,8 +4,8 @@ services:
     image: redislabs/redismod:latest
     ports:
       - 6379:6379
-  zipkin:
-    container_name: zipkin_test
-    image: ghcr.io/openzipkin/zipkin-slim
-    ports:
-      - 9411:9411
+  # zipkin:
+  #   container_name: zipkin_test
+  #   image: ghcr.io/openzipkin/zipkin-slim
+  #   ports:
+  #     - 9411:9411

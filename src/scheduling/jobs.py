@@ -5,6 +5,7 @@ from datetime import datetime
 
 from src.config import get_settings
 from src.critical_path import compare_critical_path
+from src.critical_path.models import ComparisonResult
 from src.statistic.ks import ks_test_same_dist
 from src.storage.repository import StorageRepository
 from src.transform import extract_critical_path, extract_durations
@@ -97,8 +98,8 @@ class EngineJobs:
         if settings.debug:
             logger.debug(f"Num of traces: {len(ranged_traces)}, limit: {param.limit}")
 
-        realtime_durations = extract_durations(ranged_traces)
-        if not realtime_durations:
+        ranged_durations = extract_durations(ranged_traces)
+        if not ranged_durations:
             state.isRegression = regression
             await self._storage_repo.update_state(state)
 
@@ -106,7 +107,7 @@ class EngineJobs:
 
         baseline_durations = await self._storage_repo.retrieve_durations(state.baselineKey.duration)
         # Reject null hypothesis if different distribution
-        regression = not ks_test_same_dist(realtime_durations, baseline_durations, ALPHA, settings.debug)
+        regression = not ks_test_same_dist(ranged_durations, baseline_durations, ALPHA, settings.debug)
         if settings.debug:
             if regression:
                 logger.debug("Regression Detected")
@@ -151,6 +152,26 @@ class EngineJobs:
         await self._storage_repo.update_state(state)
 
         return regression
+
+    async def critical_path_ranged(self, param: TraceRangeParam) -> list[ComparisonResult]:
+        state = await self._storage_repo.retrieve_state()
+
+        if not state.baselineReady:
+            logger.info("Baseline Not Ready")
+            return []
+
+        ranged_traces = await self.get_ranged_traces(param)
+        if settings.debug:
+            logger.debug(f"Num of traces: {len(ranged_traces)}, limit: {param.limit}")
+
+        ranged_paths = extract_critical_path(ranged_traces)
+        if not ranged_paths:
+            return []
+
+        baseline_paths = await self._storage_repo.retrieve_critical_path(state.baselineKey.criticalPath)
+        result_paths = compare_critical_path(baseline_paths, ranged_paths)
+
+        return result_paths
 
     async def perform_analysis(self):
         '''Perform Critical Path analysis + Correlation Analysis

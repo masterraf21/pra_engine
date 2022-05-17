@@ -22,7 +22,7 @@ class Comparison(BaseModel):
 
 class ComparisonResult(BaseModel):
     root: str
-    operation: str
+    operation: Optional[str]
     baseline: Optional[float]
     realtime: Optional[float]
     suspected: bool = False

@@ -85,10 +85,24 @@ async def check_regression_realtime(limit: int = 5000):
     })
 
 
+@app.get("/critical_path/range")
+async def critical_path_analysis_range(end_datetime: str, start_datetime: str, limit: int = 5000):
+    try:
+        param = TraceRangeParam(
+            endDatetime=end_datetime,
+            startDatetime=start_datetime,
+            limit=limit
+        )
+        res = await app.state.jobs.critical_path_ranged(param)
+        return JSONResponse(content=jsonable_encoder(res))
+    except ValueError as e:
+        logger.exception(e)
+        return HTTPException(status_code=400, detail=str(e))
+
+
 @app.post("/baseline")
 async def retrieve_baseline(param: TraceRangeParam):
     try:
-        logger.info(param)
         await app.state.jobs.retrieve_baseline_models(param)
         return JSONResponse(content={
             "message": "Baseline retrieved"
