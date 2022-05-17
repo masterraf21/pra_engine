@@ -60,7 +60,9 @@ class EngineJobs:
         , store in redis, change global state'''
 
         traces = await self.get_ranged_traces(param)
-        print(len(traces))
+        if settings.debug:
+            logger.debug(f"Num of traces: {len(traces)} limit: {param.limit}")
+
         durations = extract_durations(traces)
         paths = extract_critical_path(traces)
         paths_json = [p.dict() for p in paths]
