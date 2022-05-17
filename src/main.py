@@ -27,8 +27,9 @@ async def startup_event():
     app.state.redis = await init_redis()
     app.state.storage_repo = StorageRepository(app.state.redis)
     app.state.jobs = EngineJobs(app.state.storage_repo)
-    scheduler = Scheduler(app.state.jobs)
-    # scheduler.start()
+    if settings.scheduler:
+        scheduler = Scheduler(app.state.jobs)
+        scheduler.start()
 
 
 @app.on_event('shutdown')
@@ -66,7 +67,8 @@ async def check_regression_range(end_datetime: str, start_datetime: str, limit: 
             "message": output_str
         })
     except ValueError as e:
-        print(e)
+        logger.exception(e)
+        return HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/regression/fixed")
@@ -91,8 +93,9 @@ async def retrieve_baseline(param: TraceRangeParam):
         return JSONResponse(content={
             "message": "Baseline retrieved"
         })
-    except ValueError:
-        return HTTPException(status_code=400)
+    except ValueError as e:
+        logger.exception(e)
+        return HTTPException(status_code=400, detail=str(e))
 
 
 @app.delete("/baseline")

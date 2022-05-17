@@ -3,7 +3,7 @@ import json
 import time
 from datetime import datetime
 
-from src.config import ALPHA, get_settings
+from src.config import get_settings
 from src.critical_path import compare_critical_path
 from src.statistic.ks import ks_test_same_dist
 from src.storage.repository import StorageRepository
@@ -18,6 +18,7 @@ from .models import TraceRangeParam
 
 settings = get_settings()
 logger = get_logger(__name__)
+ALPHA = settings.alpha
 
 
 class EngineJobs:

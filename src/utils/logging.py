@@ -17,7 +17,7 @@ console = Console(color_system="256", tab_size=4, width=120, style=base_style, t
 @lru_cache
 def get_logger(module_name: str) -> logging.Logger:
     logger = logging.getLogger(module_name)
-    handler = RichHandler(rich_tracebacks=True, console=console, tracebacks_show_locals=True, show_path=False)
+    handler = RichHandler(rich_tracebacks=False, console=console, tracebacks_show_locals=False, show_path=False)
     # handler.setFormatter(logging.Formatter("[ %(threadName)s:%(funcName)s:%(lineno)d ] - %(message)s"))
     handler.setFormatter(logging.Formatter(" %(message)s"))
     logger.addHandler(handler)

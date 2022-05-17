@@ -5,9 +5,6 @@ from functools import lru_cache
 from pydantic import AnyUrl, BaseSettings
 
 
-ALPHA = 0.05
-
-
 class Settings(BaseSettings):
     environment: str = os.getenv("ENVIRONMENT", "dev")
     testing: str = os.getenv("TESTING", "0")
@@ -18,9 +15,10 @@ class Settings(BaseSettings):
     redis_hash: str = os.getenv("REDIS_TEST_KEY", "covid-19-test")
     zipkin_url: AnyUrl = os.getenv("ZIPKIN_URL", "http://localhost:9411/zipkin/api/v2")
     realtime_period: int = int(os.getenv("REALTIME_CHECK_PERIOD", "5"))
+    alpha: float = float(os.getenv("ALPHA", "0.05"))
+    scheduler: bool = os.getenv("SCHEDULER", False)
 
 
 @lru_cache()
 def get_settings() -> Settings:
-    # logger.info("Loading config settings from the environment...")
     return Settings()
