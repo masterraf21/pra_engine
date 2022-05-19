@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     realtime_period: int = int(os.getenv("REALTIME_CHECK_PERIOD", "5"))
     alpha: float = float(os.getenv("ALPHA", "0.05"))
     scheduler: bool = os.getenv("SCHEDULER", False)
+    latency_threshold = int(os.getenv("LATENCY_THRESHOLD", "250"))
 
 
 @lru_cache()

@@ -1,6 +1,5 @@
 import asyncio
 import json
-import time
 from datetime import datetime
 
 from src.config import get_settings
@@ -9,12 +8,9 @@ from src.critical_path.models import ComparisonResult
 from src.statistic.ks import ks_test_same_dist
 from src.storage.repository import StorageRepository
 from src.transform import extract_critical_path, extract_durations
-from src.utils import diff_two_datetime_str
 from src.utils.logging import get_logger
-from src.zipkin.helper import retrieve_traces
-from src.zipkin.models import AdjustedTrace, TraceParam
 
-from .constants import REALTIME_CHECK_PERIOD, TRACE_LIMIT
+from .helper import get_ranged_traces, get_realtime_traces
 from .models import TraceRangeParam
 
 settings = get_settings()
@@ -25,28 +21,6 @@ ALPHA = settings.alpha
 class EngineJobs:
     def __init__(self, redis_repo: StorageRepository) -> None:
         self._storage_repo = redis_repo
-
-    async def get_ranged_traces(self, param: TraceRangeParam) -> list[AdjustedTrace]:
-        time_param = diff_two_datetime_str(
-            start_str=param.startDatetime,
-            end_str=param.endDatetime
-        )
-        param = TraceParam(
-            endTs=time_param.endTs,
-            limit=param.limit,
-            lookback=time_param.lookback
-        )
-        traces = await retrieve_traces(param)
-        return traces
-
-    async def get_realtime_traces(self) -> list[AdjustedTrace]:
-        param = TraceParam(
-            endTs=round(time.time() * 1000),
-            limit=TRACE_LIMIT,
-            lookback=REALTIME_CHECK_PERIOD*1000
-        )
-        traces = await retrieve_traces(param)
-        return traces
 
     async def remove_baseline_model(self):
         state = await self._storage_repo.retrieve_state()
@@ -59,7 +33,7 @@ class EngineJobs:
         '''Query baseline traces from zipkin, transform into models
         , store in redis, change global state'''
 
-        traces = await self.get_ranged_traces(param)
+        traces = await get_ranged_traces(param)
         if settings.debug:
             logger.debug(f"Num of traces: {len(traces)} limit: {param.limit}")
 
@@ -96,7 +70,7 @@ class EngineJobs:
 
             return False
 
-        ranged_traces = await self.get_ranged_traces(param)
+        ranged_traces = await get_ranged_traces(param)
         if settings.debug:
             logger.debug(f"Num of traces: {len(ranged_traces)}, limit: {param.limit}")
 
@@ -136,7 +110,7 @@ class EngineJobs:
 
             return False
 
-        realtime_traces = await self.get_realtime_traces()
+        realtime_traces = await get_realtime_traces()
         realtime_durations = extract_durations(realtime_traces)
         if not realtime_durations:
             state.isRegression = regression
@@ -162,7 +136,7 @@ class EngineJobs:
             logger.info("Baseline Not Ready")
             return []
 
-        ranged_traces = await self.get_ranged_traces(param)
+        ranged_traces = await get_ranged_traces(param)
         if settings.debug:
             logger.debug(f"Num of traces: {len(ranged_traces)}, limit: {param.limit}")
 
@@ -183,7 +157,7 @@ class EngineJobs:
             logger.info("Baseline Not Ready")
             return
 
-        realtime_traces = await self.get_realtime_traces()
+        realtime_traces = await get_realtime_traces()
         realtime_paths = extract_critical_path(realtime_traces)
         baseline_paths = await self._storage_repo.retrieve_critical_path(state.baselineKey.criticalPath)
 
@@ -210,6 +184,5 @@ class EngineJobs:
 
     async def regression_analysis_fake(self):
         logger.info("Sleeping for")
-        # logger.info("Doing Regression Analysis")
         await asyncio.sleep(1)
         logger.info("1 second")
