@@ -4,7 +4,7 @@ from pydash import sort_by
 from src.config import get_settings
 
 from .constants import LATENCY_THRESHOLD
-from .models import ComparisonResult, ComparisonResult_v2, CriticalPath, PathDuration
+from .models import ComparisonResult, ComparisonResult_v2, CriticalPath, PathDuration, Result
 
 env = get_settings()
 
@@ -40,14 +40,17 @@ def check_suspected(diff: float, threshold: float) -> bool:
     return diff >= threshold
 
 
-def sort_result_diff(input: list[ComparisonResult] | list[ComparisonResult_v2]) -> list[ComparisonResult]:
+def sort_result_diff(input: list[ComparisonResult]
+                     | list[ComparisonResult_v2]) -> list[ComparisonResult] | list[ComparisonResult_v2]:
     return sort_by(input, 'diff', reverse=True)
 
 
 def compare_critical_path_v3(baseline: list[PathDuration],
                              realtime: list[PathDuration],
-                             threshold: int = LATENCY_THRESHOLD) -> list[ComparisonResult_v2]:
-    res: list[ComparisonResult_v2] = []
+                             threshold: int = LATENCY_THRESHOLD) -> Result:
+    suspected: list[ComparisonResult_v2] = []
+    normal: list[ComparisonResult_v2] = []
+
     # map baseline data
     baseline_lookup: dict[str, float] = {}
     for duration in baseline:
@@ -59,21 +62,25 @@ def compare_critical_path_v3(baseline: list[PathDuration],
             operation = path_duration.operation
             baseline_duration = baseline_lookup[operation]
             realtime_duration = path_duration.duration
-            diff = realtime_duration-baseline_duration
-            suspected = check_suspected(diff, threshold)
+            diff = round(realtime_duration-baseline_duration, 3)
+            suspected_check = check_suspected(diff, threshold)
+            comparison = ComparisonResult_v2(
+                operation=operation,
+                baseline=baseline_duration,
+                realtime=realtime_duration,
+                diff=diff,
+                suspected=suspected_check
+            )
 
-            if suspected:
-                comparison = ComparisonResult_v2(
-                    operation=operation,
-                    baseline=baseline_duration,
-                    realtime=realtime_duration,
-                    diff=diff,
-                    suspected=suspected
-                )
-                res.append(comparison)
-
+            if suspected_check:
+                suspected.append(comparison)
+            else:
+                normal.append(comparison)
     # sort and return
-    return sort_result_diff(res)
+    suspected = sort_result_diff(suspected)
+    normal = sort_result_diff(normal)
+
+    return Result(suspected=suspected, normal=normal)
 
 
 def compare_critical_path_v2(baseline: list[CriticalPath],

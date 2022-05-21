@@ -37,7 +37,6 @@ class ComparisonResult_v2(BaseModel):
     suspected: bool = False
 
 
-class SuspectedResult(BaseModel):
-    root: str
-    operation: str
-    diff: float
+class Result(BaseModel):
+    suspected: list[ComparisonResult_v2] = []
+    normal: list[ComparisonResult_v2] = []

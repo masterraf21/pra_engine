@@ -30,5 +30,5 @@ class TestCriticalPath(unittest.TestCase):
             baseline_path,
             realtime_path
         )
-        result_json = [r.dict() for r in result]
-        write_json(json.dumps(result_json), '/testing/cpath_compare_v3.json')
+        # result_json = [r.dict() for r in result]
+        write_json(json.dumps(result.dict()), '/testing/cpath_compare_v3.json')
