@@ -3,10 +3,38 @@ import random
 import string
 from pathlib import Path
 
-# from pydantic import parse_obj_as
-# from src.zipkin.models import Span
+from pydantic import parse_obj_as
+from src.zipkin.models import AdjustedTrace
+from src.critical_path.models import CriticalPath, PathDuration
+from src.transform.extract import extract_critical_path_v3
 
 JSON_RELATIVE_PATH = "../../test/json"
+
+
+def get_path_v3(filename: str) -> list[PathDuration]:
+    raw_json = get_json(filename)
+    data_list = []
+    for data in raw_json:
+        data_list.append(json.loads(data))
+    parsed_data = parse_obj_as(list[AdjustedTrace], data_list)
+    paths = extract_critical_path_v3(parsed_data)
+
+    return paths
+
+
+def get_traces_json(filename: str) -> list[AdjustedTrace]:
+    raw_json = get_json(filename)
+    data_list = []
+    for data in raw_json:
+        data_list.append(json.loads(data))
+    parsed_data = parse_obj_as(list[AdjustedTrace], data_list)
+    return parsed_data
+
+
+def get_path_json(filename: str) -> list[CriticalPath]:
+    data = get_json(filename)
+    parsed_data = parse_obj_as(list[CriticalPath], data)
+    return parsed_data
 
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):

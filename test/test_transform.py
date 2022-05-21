@@ -2,14 +2,29 @@ import json
 import time
 import unittest
 
-from src.transform.extract import extract_critical_path, extract_durations
-from src.utils.testing import write_json
+from src.transform.extract import extract_critical_path, extract_critical_path_v3
+from src.transform.extract import extract_critical_path_v2, extract_durations
+from src.utils.testing import write_json, get_traces_json
 from src.zipkin.helper import adjust_traces
 from src.zipkin.models import TraceParam
 from src.zipkin.query import query_traces
 
 
 class TestTransform(unittest.TestCase):
+    def test_extract_critical_path_v3(self):
+        traces = get_traces_json('/data/traces_regress.json')
+        path = extract_critical_path_v3(traces)
+        path_json = [p.dict() for p in path]
+
+        write_json(json.dumps(path_json), '/testing/critical_path_v3.json')
+
+    def test_extract_critical_path_v2(self):
+        traces = get_traces_json('/data/traces_regress.json')
+        path = extract_critical_path_v2(traces)
+        path_json = [p.dict() for p in path]
+
+        write_json(json.dumps(path_json), '/testing/critical_path_v2.json')
+
     def test_extract_critical_path(self):
         now = round(time.time() * 1000)
         lb = 60*(60*1000)

@@ -25,10 +25,18 @@ class ComparisonResult(BaseModel):
     operation: Optional[str]
     baseline: Optional[float]
     realtime: Optional[float]
+    diff: Optional[float]
     suspected: bool = False
 
 
-class SuspectedResult(BaseModel):
-    root: str
-    operation: str
-    diff: float
+class ComparisonResult_v2(BaseModel):
+    operation: Optional[str]
+    baseline: Optional[float]
+    realtime: Optional[float]
+    diff: Optional[float]
+    suspected: bool = False
+
+
+class Result(BaseModel):
+    suspected: list[ComparisonResult_v2] = []
+    normal: list[ComparisonResult_v2] = []

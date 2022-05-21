@@ -7,7 +7,7 @@ from pydantic import AnyUrl, BaseSettings
 
 class Settings(BaseSettings):
     environment: str = os.getenv("ENVIRONMENT", "dev")
-    testing: str = os.getenv("TESTING", "0")
+    test: bool = os.getenv("TESTING", False)
     debug: bool = os.getenv("DEBUG", False)
     redis_url: AnyUrl = os.getenv("REDIS_URL", "redis://localhost:6379")
     redis_password: str = os.getenv("REDIS_PASSWORD", "redis_pass")
