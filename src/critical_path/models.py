@@ -29,6 +29,14 @@ class ComparisonResult(BaseModel):
     suspected: bool = False
 
 
+class ComparisonResult_v2(BaseModel):
+    operation: Optional[str]
+    baseline: Optional[float]
+    realtime: Optional[float]
+    diff: Optional[float]
+    suspected: bool = False
+
+
 class SuspectedResult(BaseModel):
     root: str
     operation: str

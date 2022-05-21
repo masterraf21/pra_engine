@@ -1,15 +1,8 @@
 import unittest
 import json
-from pydantic import parse_obj_as
-from src.critical_path.models import CriticalPath
 from src.critical_path.process import compare_critical_path, compare_critical_path_v2
-from src.utils.testing import get_json, write_json
-
-
-def get_path_json(filename: str) -> list[CriticalPath]:
-    data = get_json(filename)
-    parsed_data = parse_obj_as(list[CriticalPath], data)
-    return parsed_data
+from src.critical_path.process import compare_critical_path_v3
+from src.utils.testing import write_json, get_path_json, get_path_v3
 
 
 class TestCriticalPath(unittest.TestCase):
@@ -28,3 +21,14 @@ class TestCriticalPath(unittest.TestCase):
         result = compare_critical_path_v2(baseline_paths, regress_paths)
         result_json = [r.dict() for r in result]
         write_json(json.dumps(result_json), '/testing/cpath_compare_v2.json')
+
+    def test_compare_v3(self):
+        baseline_path = get_path_v3('/data/traces_baseline.json')
+        realtime_path = get_path_v3('/data/traces_regress.json')
+
+        result = compare_critical_path_v3(
+            baseline_path,
+            realtime_path
+        )
+        result_json = [r.dict() for r in result]
+        write_json(json.dumps(result_json), '/testing/cpath_compare_v3.json')

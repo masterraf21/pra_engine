@@ -4,7 +4,7 @@ from pydash import sort_by
 from src.config import get_settings
 
 from .constants import LATENCY_THRESHOLD
-from .models import ComparisonResult, CriticalPath, PathDuration
+from .models import ComparisonResult, ComparisonResult_v2, CriticalPath, PathDuration
 
 env = get_settings()
 
@@ -40,8 +40,40 @@ def check_suspected(diff: float, threshold: float) -> bool:
     return diff >= threshold
 
 
-def sort_result_diff(input: list[ComparisonResult]) -> list[ComparisonResult]:
-    return sort_by(input, 'diff', True)
+def sort_result_diff(input: list[ComparisonResult] | list[ComparisonResult_v2]) -> list[ComparisonResult]:
+    return sort_by(input, 'diff', reverse=True)
+
+
+def compare_critical_path_v3(baseline: list[PathDuration],
+                             realtime: list[PathDuration],
+                             threshold: int = LATENCY_THRESHOLD) -> list[ComparisonResult_v2]:
+    res: list[ComparisonResult_v2] = []
+    # map baseline data
+    baseline_lookup: dict[str, float] = {}
+    for duration in baseline:
+        baseline_lookup[duration.operation] = duration.duration
+
+    # compare realtime to map
+    for path_duration in realtime:
+        if path_duration.operation in baseline_lookup:
+            operation = path_duration.operation
+            baseline_duration = baseline_lookup[operation]
+            realtime_duration = path_duration.duration
+            diff = realtime_duration-baseline_duration
+            suspected = check_suspected(diff, threshold)
+
+            if suspected:
+                comparison = ComparisonResult_v2(
+                    operation=operation,
+                    baseline=baseline_duration,
+                    realtime=realtime_duration,
+                    diff=diff,
+                    suspected=suspected
+                )
+                res.append(comparison)
+
+    # sort and return
+    return sort_result_diff(res)
 
 
 def compare_critical_path_v2(baseline: list[CriticalPath],

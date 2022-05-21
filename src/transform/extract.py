@@ -3,6 +3,64 @@ from src.critical_path.models import CriticalPath, PathDuration
 import numpy as np
 
 
+def extract_critical_path_v3(traces: list[AdjustedTrace]) -> list[PathDuration]:
+    res: list[PathDuration] = []
+    lookup: dict[str, list[float]] = {}
+
+    for trace in traces:
+        for span in trace.spans:
+            operation = f"{span.spanName}"
+            duration = span.duration/1000
+            if operation not in lookup:
+                lookup[operation] = [duration]
+            else:
+                lookup[operation].append(duration)
+
+    for operation in lookup.keys():
+        durations = lookup[operation]
+        duration_avg = round(np.average(durations), 3)
+        res.append(PathDuration(
+            duration=duration_avg,
+            operation=operation,
+            counter=len(durations)
+        ))
+
+    return res
+
+
+def extract_critical_path_v2(traces: list[AdjustedTrace]) -> list[CriticalPath]:
+    res: list[CriticalPath] = []
+    lookup: dict[str, dict[str, list[float]]] = {}
+    for trace in traces:
+        root_span = trace.rootSpan
+        root = f"{root_span.serviceName}"
+        if root not in lookup:
+            lookup[root] = {}
+        for span in trace.spans:
+            operation = f"{span.spanName}"
+            duration = span.duration/1000
+            if operation not in lookup[root]:
+                lookup[root][operation] = [duration]
+            else:
+                lookup[root][operation].append(duration)
+    for root in lookup.keys():
+        operations_lookup = lookup[root]
+        durations: list[PathDuration] = []
+        for operation in operations_lookup.keys():
+            duration_avg = round(np.average(operations_lookup[operation]), 3)
+            durations.append(PathDuration(
+                duration=duration_avg,
+                operation=operation,
+                counter=len(operations_lookup[operation])
+            ))
+        res.append(CriticalPath(
+            root=root,
+            durations=durations
+        ))
+
+    return res
+
+
 def extract_critical_path(traces: list[AdjustedTrace]) -> list[CriticalPath]:
     res: list[CriticalPath] = []
     lookup: dict[str, dict[str, list[float]]] = {}
