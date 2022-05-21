@@ -7,7 +7,7 @@ def extract_critical_path(traces: list[AdjustedTrace]) -> list[CriticalPath]:
     res: list[CriticalPath] = []
     lookup: dict[str, dict[str, list[float]]] = {}
     for trace in traces:
-        temp: dict[str, list[float]] = {}
+        # temp: dict[str, list[float]] = {}
         root_span = trace.rootSpan
         root = f"{root_span.serviceName}: {root_span.spanName}"
         if root not in lookup:
@@ -40,7 +40,7 @@ def extract_critical_path(traces: list[AdjustedTrace]) -> list[CriticalPath]:
 def extract_spans_durations(spans: list[AdjustedSpan]) -> list[float]:
     res: list[float] = []
     for span in spans:
-        # duration in microsecond
+        # duration in microsecond, convert to milisecond
         res.append(span.duration/1000)
     return res
 

@@ -25,6 +25,7 @@ class ComparisonResult(BaseModel):
     operation: Optional[str]
     baseline: Optional[float]
     realtime: Optional[float]
+    diff: Optional[float]
     suspected: bool = False
 
 
