@@ -22,7 +22,7 @@ spanExample = {
     "C": 3
 }
 
-settings = get_settings()
+env = get_settings()
 
 
 def get_trace(file_name: str) -> list[Span]:
@@ -248,7 +248,7 @@ class TestQuery(unittest.IsolatedAsyncioTestCase):
 
 class TestDynaconf(unittest.TestCase):
     def test_url(self):
-        self.assertEqual(settings.src.zipkin_api,
+        self.assertEqual(env.src.zipkin_api,
                          "http://localhost:9411/src.zipkin/api/v2")
 
 

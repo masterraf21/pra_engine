@@ -5,8 +5,8 @@ from src.utils.checking import omit_none_dict
 
 from .models import DependencyLink, Span, TraceParam
 
-settings = get_settings()
-API = settings.zipkin_url
+env = get_settings()
+API = env.zipkin_url
 
 
 async def query_traces(param: TraceParam) -> list[list[Span]]:

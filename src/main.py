@@ -1,33 +1,45 @@
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from starlette.datastructures import State
 
+from src.config import get_settings
 from src.scheduling.jobs import EngineJobs
+from src.scheduling.models import (AnalysisParam, AnalysisResult, GlobalState,
+                                   TraceRangeParam)
 from src.scheduling.scheduler import Scheduler
-from src.scheduling.models import TraceRangeParam
 from src.storage.redis import init_redis
 from src.storage.repository import StorageRepository
 from src.utils.logging import get_logger
-from src.config import get_settings
 
-settings = get_settings()
+env = get_settings()
 logger = get_logger(__name__)
 
+
+def get_repo(state: State) -> StorageRepository:
+    repo: StorageRepository = state.storage_repo
+    return repo
+
+
+def get_jobs(state: State) -> EngineJobs:
+    jobs: EngineJobs = state.jobs
+    return jobs
+
+
 app = FastAPI(title="PRA Engine", version="0.5")
-app.logger = logger
 
 
 @app.on_event('startup')
 async def startup_event():
     logger.info("Initiating PRA Engine...")
-    if settings.debug:
+    if env.debug:
         logger.debug("Running in debug mode")
 
     app.state.redis = await init_redis()
     app.state.storage_repo = StorageRepository(app.state.redis)
     app.state.jobs = EngineJobs(app.state.storage_repo)
-    if settings.scheduler:
+    if env.scheduler:
         scheduler = Scheduler(app.state.jobs)
         scheduler.start()
 
@@ -43,78 +55,59 @@ async def root():
     return {"message": "Hello Engine Users"}
 
 
-@app.get("/state")
+@app.get("/state", response_model=GlobalState)
 async def get_state():
-    state = await app.state.storage_repo.retrieve_state()
+    repo = get_repo(app.state)
+    state = await repo.retrieve_state()
     return JSONResponse(content=jsonable_encoder(state))
-
-
-@app.get("/regression/range")
-async def check_regression_range(end_datetime: str, start_datetime: str, limit: int = 5000):
-    try:
-        param = TraceRangeParam(
-            endDatetime=end_datetime,
-            startDatetime=start_datetime,
-            limit=limit
-        )
-        regression = await app.state.jobs.check_regression_range(param)
-        if regression:
-            output_str = "Regression detected"
-        else:
-            output_str = "Regression not detected"
-
-        return JSONResponse(content={
-            "message": output_str
-        })
-    except ValueError as e:
-        logger.exception(e)
-        return HTTPException(status_code=400, detail=str(e))
-
-
-@app.get("/regression/fixed")
-async def check_regression_realtime(limit: int = 5000):
-    regression = await app.state.jobs.check_regression_realtime()
-    output_str = ""
-    if regression:
-        output_str = "Regression detected"
-    else:
-        output_str = "Regression not detected"
-
-    return JSONResponse(content={
-        "message": output_str
-    })
-
-
-@app.get("/critical_path/range")
-async def critical_path_analysis_range(end_datetime: str, start_datetime: str, limit: int = 5000):
-    try:
-        param = TraceRangeParam(
-            endDatetime=end_datetime,
-            startDatetime=start_datetime,
-            limit=limit
-        )
-        res = await app.state.jobs.critical_path_ranged(param)
-        return JSONResponse(content=jsonable_encoder(res))
-    except ValueError as e:
-        logger.exception(e)
-        return HTTPException(status_code=400, detail=str(e))
 
 
 @app.post("/baseline")
 async def retrieve_baseline(param: TraceRangeParam):
     try:
-        await app.state.jobs.retrieve_baseline_models(param)
+        jobs = get_jobs(app.state)
+        await jobs.retrieve_baseline_models(param)
         return JSONResponse(content={
             "message": "Baseline retrieved"
         })
     except ValueError as e:
         logger.exception(e)
-        return HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @app.delete("/baseline")
 async def remove_baseline():
-    await app.state.jobs.remove_baseline_model()
+    jobs = get_jobs(app.state)
+    await jobs.remove_baseline_model()
     return JSONResponse(content={
         "message": "Baseline removed"
     })
+
+
+@app.get("/analysis/realtime", response_model=AnalysisResult)
+async def regression_analysis_realtime():
+    try:
+        jobs = get_jobs(app.state)
+
+        result = await jobs.regression_analysis_realtime()
+        return JSONResponse(content=jsonable_encoder(result))
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@app.get("/analysis/range", response_model=AnalysisResult)
+async def regression_analysis_range(param: AnalysisParam = Depends()):
+    try:
+        jobs = get_jobs(app.state)
+
+        trace_param = TraceRangeParam(
+            endDatetime=param.endDatetime,
+            startDatetime=param.startDatetime,
+            limit=param.limit
+        )
+        result = await jobs.regression_analysis_range(trace_param, param.latencyThreshold)
+        return JSONResponse(content=jsonable_encoder(result))
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

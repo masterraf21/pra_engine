@@ -14,4 +14,4 @@ class Scheduler:
     def start(self):
         logger.info("Starting Scheduler")
         self._sch.start()
-        self._sch.add_job(self._jobs.regression_analysis, 'interval', seconds=REALTIME_CHECK_PERIOD)
+        self._sch.add_job(self._jobs.regression_analysis_realtime, 'interval', seconds=REALTIME_CHECK_PERIOD)

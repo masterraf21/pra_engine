@@ -1,11 +1,11 @@
 services:
   redis:
-    container_name: redis_test
-    image: redislabs/redismod:latest
+    container_name: redis_dev
+    image: redislabs/rejson:latest
     ports:
       - 6379:6379
   zipkin:
-    container_name: zipkin_test
+    container_name: zipkin_dev
     image: ghcr.io/openzipkin/zipkin-slim
     ports:
       - 9411:9411

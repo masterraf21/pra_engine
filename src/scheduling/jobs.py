@@ -1,21 +1,23 @@
-import asyncio
 import json
 from datetime import datetime
 
 from src.config import get_settings
-from src.critical_path import compare_critical_path
 from src.critical_path.models import ComparisonResult
+from src.critical_path.process import (compare_critical_path,
+                                       compare_critical_path_v3)
 from src.statistic.ks import ks_test_same_dist
 from src.storage.repository import StorageRepository
-from src.transform import extract_critical_path, extract_durations
+from src.transform import (extract_critical_path, extract_critical_path_v3,
+                           extract_durations)
+from src.transform.extract import extract_critical_path_v2
 from src.utils.logging import get_logger
 
 from .helper import get_ranged_traces, get_realtime_traces
-from .models import TraceRangeParam
+from .models import AnalysisResult, TraceRangeParam
 
-settings = get_settings()
+env = get_settings()
 logger = get_logger(__name__)
-ALPHA = settings.alpha
+ALPHA = env.alpha
 
 
 class EngineJobs:
@@ -34,11 +36,11 @@ class EngineJobs:
         , store in redis, change global state'''
 
         traces = await get_ranged_traces(param)
-        if settings.debug:
+        if env.debug:
             logger.debug(f"Num of traces: {len(traces)} limit: {param.limit}")
 
         durations = extract_durations(traces)
-        paths = extract_critical_path(traces)
+        paths = extract_critical_path_v2(traces)
         paths_json = [p.dict() for p in paths]
 
         curr_dt = datetime.now()
@@ -71,7 +73,7 @@ class EngineJobs:
             return False
 
         ranged_traces = await get_ranged_traces(param)
-        if settings.debug:
+        if env.debug:
             logger.debug(f"Num of traces: {len(ranged_traces)}, limit: {param.limit}")
 
         ranged_durations = extract_durations(ranged_traces)
@@ -83,8 +85,8 @@ class EngineJobs:
 
         baseline_durations = await self._storage_repo.retrieve_durations(state.baselineKey.duration)
         # Reject null hypothesis if different distribution
-        regression = not ks_test_same_dist(ranged_durations, baseline_durations, ALPHA, settings.debug)
-        if settings.debug:
+        regression = not ks_test_same_dist(ranged_durations, baseline_durations, ALPHA, env.debug)
+        if env.debug:
             if regression:
                 logger.debug("Regression Detected")
             else:
@@ -98,31 +100,27 @@ class EngineJobs:
     async def check_regression_realtime(self) -> bool:
         '''Check realtime regression by comparing realtime
         durations to baseline durations'''
-        # Null Hypothesis
         regression = False
 
         state = await self._storage_repo.retrieve_state()
         state.lastRegressionCheck = datetime.now().strftime("%d/%m/%y %H:%M:%S")
 
         if not state.baselineReady:
-            logger.info("Baseline Not Ready")
             await self._storage_repo.update_state(state)
-
-            return False
+            raise ValueError("Baseline is not ready")
 
         realtime_traces = await get_realtime_traces()
         realtime_durations = extract_durations(realtime_traces)
         if not realtime_durations:
             state.isRegression = regression
             await self._storage_repo.update_state(state)
-            if settings.debug:
-                logger.debug("Realtime Durations empty, returning False")
+            logger.info("Realtime Durations empty, returning False")
 
-            return False
+            return regression
 
         baseline_durations = await self._storage_repo.retrieve_durations(state.baselineKey.duration)
-        # Reject null hypothesis if different distribution
-        regression = not ks_test_same_dist(realtime_durations, baseline_durations, ALPHA, settings.debug)
+        # Regression = Different Distribution
+        regression = not ks_test_same_dist(realtime_durations, baseline_durations, ALPHA, env.debug)
 
         state.isRegression = regression
         await self._storage_repo.update_state(state)
@@ -137,7 +135,7 @@ class EngineJobs:
             return []
 
         ranged_traces = await get_ranged_traces(param)
-        if settings.debug:
+        if env.debug:
             logger.debug(f"Num of traces: {len(ranged_traces)}, limit: {param.limit}")
 
         ranged_paths = extract_critical_path(ranged_traces)
@@ -173,16 +171,100 @@ class EngineJobs:
         state.resultKey.criticalPath = result_paths_key
         await self._storage_repo.update_state(state)
 
-    async def regression_analysis(self):
-        logger.info("Doing Regression Analysis")
-        regression = await self.check_regression_realtime()
-        if regression:
-            logger.info("Regression Detected")
-            await self.perform_analysis()
-        else:
-            logger.info("No Regression Detected")
+    async def regression_analysis_range(self, param: TraceRangeParam, latency_threshold: int) -> AnalysisResult:
+        '''
+            Perform regression analysis with specified time range
+        '''
+        regression = False
 
-    async def regression_analysis_fake(self):
-        logger.info("Sleeping for")
-        await asyncio.sleep(1)
-        logger.info("1 second")
+        state = await self._storage_repo.retrieve_state()
+        if not state.baselineReady:
+            raise ValueError("Baseline is not ready")
+
+        ranged_traces = await get_ranged_traces(param)
+        if env.debug:
+            logger.debug(f"Num of traces: {len(ranged_traces)}, limit: {param.limit}")
+
+        ranged_durations = extract_durations(ranged_traces)
+        if not ranged_durations:
+            if env.debug:
+                logger.debug("Ranged trace empty")
+
+            return AnalysisResult()
+
+        baseline_durations = await self._storage_repo.retrieve_durations(state.baselineKey.duration)
+        # Regression = Different Distribution
+        regression = not ks_test_same_dist(ranged_durations, baseline_durations, ALPHA, env.debug)
+        if env.debug:
+            if regression:
+                logger.debug("Regression Detected")
+            else:
+                logger.debug("Regression not Detected")
+
+        if not regression:
+            return AnalysisResult()
+
+        # Regression detected, perform critical path analysis
+        realtime_paths = extract_critical_path_v3(ranged_traces)
+        baseline_paths = await self._storage_repo.retrieve_critical_path_v2(state.baselineKey.criticalPath)
+        critical_path_result = compare_critical_path_v3(baseline_paths, realtime_paths, latency_threshold)
+
+        analysis_result = AnalysisResult(
+            critical_path_result=critical_path_result,
+            regression=regression
+        )
+
+        return analysis_result
+
+    async def regression_analysis_realtime(self) -> AnalysisResult:
+        '''
+            Perform regression analysis realtime in periodical interval
+        '''
+        regression = False
+
+        state = await self._storage_repo.retrieve_state()
+        state.lastRegressionCheck = datetime.now().strftime("%d/%m/%y %H:%M:%S")
+
+        if not state.baselineReady:
+            await self._storage_repo.update_state(state)
+            raise ValueError("Baseline is not ready")
+
+        realtime_traces = await get_realtime_traces()
+        realtime_durations = extract_durations(realtime_traces)
+        if not realtime_durations:
+            state.isRegression = regression
+            await self._storage_repo.update_state(state)
+            logger.info("Realtime Durations empty, returning False")
+
+            return regression
+
+        baseline_durations = await self._storage_repo.retrieve_durations(state.baselineKey.duration)
+
+        # Regression = Different Distribution
+        regression = not ks_test_same_dist(realtime_durations, baseline_durations, ALPHA, env.debug)
+        if env.debug:
+            if regression:
+                logger.debug("Regression Detected")
+            else:
+                logger.debug("Regression not Detected")
+
+        state.isRegression = regression
+        state.currentAnalysis = AnalysisResult()
+
+        if not regression:
+            await self._storage_repo.update_state(state)
+            return AnalysisResult()
+
+        # Regression detected, perform critical path analysis
+        realtime_paths = extract_critical_path_v3(realtime_traces)
+        baseline_paths = await self._storage_repo.retrieve_critical_path_v2(state.baselineKey.criticalPath)
+        critical_path_result = compare_critical_path_v3(baseline_paths, realtime_paths)
+
+        analysis_result = AnalysisResult(
+            critical_path_result=critical_path_result,
+            regression=regression
+        )
+        state.currentAnalysis = analysis_result
+        await self._storage_repo.update_state(state)
+
+        return analysis_result
