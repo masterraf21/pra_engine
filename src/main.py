@@ -1,16 +1,17 @@
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from starlette.datastructures import State
 
+from src.config import get_settings
 from src.scheduling.jobs import EngineJobs
+from src.scheduling.models import (AnalysisParam, AnalysisResult, GlobalState,
+                                   TraceRangeParam)
 from src.scheduling.scheduler import Scheduler
-from src.scheduling.models import AnalysisResult, GlobalState, TraceRangeParam, AnalysisParam
 from src.storage.redis import init_redis
 from src.storage.repository import StorageRepository
 from src.utils.logging import get_logger
-from src.config import get_settings
 
 env = get_settings()
 logger = get_logger(__name__)
@@ -96,7 +97,7 @@ async def regression_analysis_realtime():
 
 
 @app.get("/analysis/range", response_model=AnalysisResult)
-async def regression_analysis_range(param: AnalysisParam):
+async def regression_analysis_range(param: AnalysisParam = Depends()):
     try:
         jobs = get_jobs(app.state)
 
