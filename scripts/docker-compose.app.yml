@@ -1,0 +1,32 @@
+services:
+  redis:
+    container_name: redis
+    image: redislabs/rejson:latest
+    ports:
+      - 6379:6379
+  zipkin:
+    container_name: zipkin
+    image: ghcr.io/openzipkin/zipkin-slim
+    ports:
+      - 9411:9411
+
+  engine:
+    container_name: pra-engine
+    image: pra-engine:0.1
+    ports:
+      - 3300:3300
+    environment:
+      - ENVIRONMENT=docker
+      - PORT=3300
+      - ALPHA=0.05
+      - TESTING=0
+      - DEBUG=1
+      - SCHEDULER=0
+      - REDIS_URL=redis://redis:6379
+      - REDIS_DB=0
+      - ZIPKIN_URL=http://localhost:9411/api/v2
+      - REALTIME_CHECK_PERIOD=5
+
+networks:
+  default:
+    driver: bridge

@@ -33,6 +33,7 @@ app = FastAPI(title="PRA Engine", version="0.5")
 @app.on_event('startup')
 async def startup_event():
     logger.info("Initiating PRA Engine...")
+    logger.info(f"Running in {env.environment} environment")
     if env.debug:
         logger.debug("Running in debug mode")
 
