@@ -1,4 +1,4 @@
 from src.config import get_settings
-settings = get_settings()
+env = get_settings()
 
-LATENCY_THRESHOLD = settings.latency_threshold
+LATENCY_THRESHOLD = env.latency_threshold
