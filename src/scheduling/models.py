@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from src.critical_path.models import Result
+from src.critical_path.models import Result, ComparisonResult_v2
 from src.critical_path.constants import LATENCY_THRESHOLD
 
 
@@ -18,7 +18,7 @@ class GlobalState(BaseModel):
     baselineReady: bool = False
     isRegression: bool = False
     lastRegressionCheck: Optional[str]
-    currentAnalysis: AnalysisResult = AnalysisResult()
+    suspectedCriticalPath: list[ComparisonResult_v2] = []
     baselineKey: Key = Key()
 
 

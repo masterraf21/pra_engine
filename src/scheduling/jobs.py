@@ -9,7 +9,6 @@ from src.statistic.ks import ks_test_same_dist
 from src.storage.repository import StorageRepository
 from src.transform import (extract_critical_path, extract_critical_path_v3,
                            extract_durations)
-from src.transform.extract import extract_critical_path_v2
 from src.utils.logging import get_logger
 
 from .helper import get_ranged_traces, get_realtime_traces
@@ -40,7 +39,7 @@ class EngineJobs:
             logger.debug(f"Num of traces: {len(traces)} limit: {param.limit}")
 
         durations = extract_durations(traces)
-        paths = extract_critical_path_v2(traces)
+        paths = extract_critical_path_v3(traces)
         paths_json = [p.dict() for p in paths]
 
         curr_dt = datetime.now()
@@ -187,8 +186,7 @@ class EngineJobs:
 
         ranged_durations = extract_durations(ranged_traces)
         if not ranged_durations:
-            if env.debug:
-                logger.debug("Ranged trace empty")
+            logger.info("Ranged trace empty")
 
             return AnalysisResult()
 
@@ -236,7 +234,7 @@ class EngineJobs:
             await self._storage_repo.update_state(state)
             logger.info("Realtime Durations empty, returning False")
 
-            return regression
+            return AnalysisResult()
 
         baseline_durations = await self._storage_repo.retrieve_durations(state.baselineKey.duration)
 
@@ -249,7 +247,6 @@ class EngineJobs:
                 logger.debug("Regression not Detected")
 
         state.isRegression = regression
-        state.currentAnalysis = AnalysisResult()
 
         if not regression:
             await self._storage_repo.update_state(state)
@@ -264,7 +261,7 @@ class EngineJobs:
             critical_path_result=critical_path_result,
             regression=regression
         )
-        state.currentAnalysis = analysis_result
+        state.suspectedCriticalPath = critical_path_result.suspected
         await self._storage_repo.update_state(state)
 
         return analysis_result
