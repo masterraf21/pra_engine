@@ -3,8 +3,8 @@ from pydantic import BaseModel
 
 
 class PathDuration(BaseModel):
-    operation: str
-    duration: float
+    operation: Optional[str]
+    duration: Optional[float]
     counter: Optional[int]
 
 

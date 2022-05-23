@@ -2,6 +2,7 @@
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.datastructures import State
 
 from src.config import get_settings
@@ -15,6 +16,7 @@ from src.utils.logging import get_logger
 
 env = get_settings()
 logger = get_logger(__name__)
+origins = ["*"]
 
 
 def get_repo(state: State) -> StorageRepository:
@@ -28,6 +30,13 @@ def get_jobs(state: State) -> EngineJobs:
 
 
 app = FastAPI(title="PRA Engine", version="0.5")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.on_event('startup')
@@ -93,6 +102,7 @@ async def regression_analysis_realtime():
         result = await jobs.regression_analysis_realtime()
         return JSONResponse(content=jsonable_encoder(result))
     except ValueError as e:
+        logger.exception(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -110,5 +120,6 @@ async def regression_analysis_range(param: AnalysisParam = Depends()):
         result = await jobs.regression_analysis_range(trace_param, param.latencyThreshold)
         return JSONResponse(content=jsonable_encoder(result))
     except ValueError as e:
+        logger.exception(e)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
