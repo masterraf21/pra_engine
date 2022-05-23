@@ -6,7 +6,7 @@ from pathlib import Path
 from pydantic import parse_obj_as
 from src.zipkin.models import AdjustedTrace
 from src.critical_path.models import CriticalPath, PathDuration
-from src.transform.extract import extract_critical_path_v3
+from src.transform.extract import extract_critical_path
 
 JSON_RELATIVE_PATH = "../../test/json"
 
@@ -17,7 +17,7 @@ def get_path_v3(filename: str) -> list[PathDuration]:
     for data in raw_json:
         data_list.append(json.loads(data))
     parsed_data = parse_obj_as(list[AdjustedTrace], data_list)
-    paths = extract_critical_path_v3(parsed_data)
+    paths = extract_critical_path(parsed_data)
 
     return paths
 

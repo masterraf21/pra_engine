@@ -1,7 +1,7 @@
 import unittest
 import json
 from src.critical_path.process import compare_critical_path, compare_critical_path_v2
-from src.critical_path.process import compare_critical_path_v3
+from src.critical_path.process import compare_critical_path
 from src.utils.testing import write_json, get_path_json, get_path_v3
 
 
@@ -26,7 +26,7 @@ class TestCriticalPath(unittest.TestCase):
         baseline_path = get_path_v3('/data/traces_baseline.json')
         realtime_path = get_path_v3('/data/traces_regress.json')
 
-        result = compare_critical_path_v3(
+        result = compare_critical_path(
             baseline_path,
             realtime_path
         )
