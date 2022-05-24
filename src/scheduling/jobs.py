@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 
+import pytz
 from src.config import get_settings
 from src.critical_path.process import compare_critical_path
 from src.statistic.ks import ks_test_same_dist
@@ -13,6 +14,7 @@ from .models import AnalysisResult, TraceRangeParam
 
 env = get_settings()
 logger = get_logger(__name__)
+timezone = pytz.timezone("Asia/Jakarta")
 ALPHA = env.alpha
 
 
@@ -104,7 +106,7 @@ class EngineJobs:
         regression = False
 
         state = await self._storage_repo.retrieve_state()
-        state.lastRegressionCheck = datetime.now().strftime("%d/%m/%y %H:%M:%S")
+        state.lastRegressionCheck = datetime.now(timezone).strftime("%d/%m/%y %H:%M:%S")
 
         if not state.baselineReady:
             await self._storage_repo.update_state(state)

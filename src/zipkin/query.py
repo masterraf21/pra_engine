@@ -1,3 +1,4 @@
+from src.utils.logging import get_logger
 import aiohttp
 from pydantic import parse_obj_as
 from src.config import get_settings
@@ -6,6 +7,7 @@ from src.utils.checking import omit_none_dict
 from .models import DependencyLink, Span, TraceParam
 
 env = get_settings()
+logger = get_logger(__name__)
 API = env.zipkin_url
 
 
