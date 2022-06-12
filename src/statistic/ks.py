@@ -2,10 +2,11 @@ import math
 
 from scipy.stats import ks_2samp
 from src.utils.logging import get_logger
-
+from src.config import get_settings
 from .constants import C_ALPHA
 
 logger = get_logger(__name__)
+env = get_settings()
 
 
 def ks_test_same_dist(data1: list[float], data2: list[float],
@@ -36,7 +37,12 @@ def ks_test_same_dist(data1: list[float], data2: list[float],
 
 
 def count_critical_value(n1: int, n2: int, alpha: float) -> float:
+    if env.debug:
+        logger.debug(f"n1: {n1} n2: {n2}")
+    if env.test:
+        print(f"n1: {n1} n2: {n2}")
     if alpha not in C_ALPHA:
         raise ValueError("Alpha not available")
     c_alpha = C_ALPHA[alpha]
-    return c_alpha*math.sqrt((n1+n2)/n1*n2)
+
+    return c_alpha*math.sqrt((n1+n2)/(n1*n2))
